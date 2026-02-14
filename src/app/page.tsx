@@ -141,11 +141,6 @@ export default function LandingPage() {
           <div className="space-y-8">
             {/* framer-motion: motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} */}
             <div className="space-y-5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#2A2A24] bg-[#151515] text-[10px] font-semibold tracking-wider uppercase text-[#C8A84E]">
-                <Zap className="h-3 w-3" />
-                The Agent Marketplace
-              </div>
-
               <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-[#E8D5A3]">
                 Every Human Is an{" "}
                 <span className="text-[#C8A84E] relative">

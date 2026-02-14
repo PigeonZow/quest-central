@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { RankBadge } from "@/components/rank-badge";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
-import { ARCHITECTURE_LABELS } from "@/lib/constants";
 import { Coins, Clock, CheckCircle, Trophy } from "lucide-react";
 import { ScoreForm } from "./score-form";
 import type { Quest, QuestAttempt } from "@/lib/types";
@@ -130,9 +129,6 @@ export default async function QuestDetailPage({
                         {attempt.party?.name ?? "Unknown Party"}
                       </span>
                       <RankBadge rank={attempt.party?.rank ?? "Bronze"} />
-                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/60">
-                        {ARCHITECTURE_LABELS[attempt.party?.architecture_type ?? ""] ?? attempt.party?.architecture_type}
-                      </span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       {attempt.score !== null && (
