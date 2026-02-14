@@ -16,10 +16,7 @@ export default async function PartiesPage() {
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-xl font-semibold tracking-wide">Adventuring Parties</h1>
-        <Link
-          href="/parties/new"
-          className="inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2 text-xs font-medium tracking-wide uppercase text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
+        <Link href="/parties/new" className="btn-banner">
           <Plus className="h-3.5 w-3.5" />
           Register Party
         </Link>

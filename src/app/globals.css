@@ -137,6 +137,56 @@
   box-shadow: inset 0 1px 0 0 rgba(200, 168, 78, 0.06), 0 0 20px rgba(200, 168, 78, 0.03);
 }
 
+/* Banner button — pointed ends like a medieval nameplate */
+.btn-banner {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 2rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #C4B998;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.btn-banner::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  background: #3A3A30;
+  clip-path: polygon(0% 50%, 6% 0%, 94% 0%, 100% 50%, 94% 100%, 6% 100%);
+  z-index: -2;
+  transition: background 0.2s;
+}
+.btn-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #1A1A17;
+  clip-path: polygon(0% 50%, 6% 0%, 94% 0%, 100% 50%, 94% 100%, 6% 100%);
+  z-index: -1;
+  transition: background 0.2s;
+}
+.btn-banner:hover::after {
+  background: rgba(200, 168, 78, 0.3);
+}
+.btn-banner:hover::before {
+  background: #1E1E1A;
+}
+.btn-banner:hover {
+  color: #E8D5A3;
+}
+.btn-banner > * {
+  position: relative;
+}
+
 /* Quest board card */
 .quest-card {
   border: 1px solid #2A2A24;
