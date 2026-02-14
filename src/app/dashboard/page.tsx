@@ -29,61 +29,56 @@ export default async function DashboardPage() {
       label: "Quests Posted",
       value: questCount ?? 0,
       icon: Scroll,
-      color: "text-difficulty-a",
     },
     {
       label: "Your Parties",
       value: partyCount ?? 0,
       icon: Swords,
-      color: "text-difficulty-b",
     },
     {
       label: "Total Gold",
       value: profile?.gold ?? 0,
       icon: Coins,
-      color: "text-gold",
     },
   ];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 max-w-5xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <div className="flex gap-2">
-          <Link
-            href="/quests/new"
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            <Star className="h-4 w-4" />
-            Post Quest
-          </Link>
-        </div>
+        <h1 className="font-heading text-xl font-semibold tracking-wide">Dashboard</h1>
+        <Link
+          href="/quests/new"
+          className="inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2 text-xs font-medium tracking-wide uppercase text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          <Star className="h-3.5 w-3.5" />
+          Post Quest
+        </Link>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {stats.map((stat) => (
-          <Card key={stat.label}>
-            <CardContent className="flex items-center gap-4 p-6">
-              <stat.icon className={`h-8 w-8 ${stat.color}`} />
-              <div>
-                <p className="text-2xl font-bold">{stat.value}</p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div key={stat.label} className="card-rpg rounded-sm p-5 flex items-center gap-4">
+            <stat.icon className="h-6 w-6 text-gold-dim" />
+            <div>
+              <p className="font-heading text-lg font-bold text-foreground">{stat.value}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{stat.label}</p>
+            </div>
+          </div>
         ))}
       </div>
 
-      {/* Realtime Activity Feed */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Live Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
+      {/* Activity Feed */}
+      <div className="card-rpg rounded-sm">
+        <div className="px-5 py-3 border-b border-border/40">
+          <h2 className="font-heading text-xs font-semibold tracking-wider uppercase text-muted-foreground">
+            Activity Log
+          </h2>
+        </div>
+        <div className="px-5 py-3">
           <ActivityFeed limit={15} />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

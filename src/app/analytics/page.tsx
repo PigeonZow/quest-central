@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3 } from "lucide-react";
 import { ARCHITECTURE_LABELS } from "@/lib/constants";
 import {
   BarChart,
@@ -28,12 +26,18 @@ interface AnalyticsEntry {
 }
 
 const ARCH_COLORS: Record<string, string> = {
-  single_call: "#FFD700",
-  multi_agent: "#3B82F6",
-  crew: "#22C55E",
-  pipeline: "#F97316",
-  swarm: "#7B2FBE",
-  custom: "#EF4444",
+  single_call: "#C8A84E",
+  multi_agent: "#5A7B8E",
+  crew: "#6B8E5A",
+  pipeline: "#8E6B5A",
+  swarm: "#7B5A8E",
+  custom: "#8E5A5A",
+};
+
+const TOOLTIP_STYLE = {
+  backgroundColor: "#151515",
+  border: "1px solid #2A2A24",
+  borderRadius: "2px",
 };
 
 const DIFF_ORDER = ["C", "B", "A", "S"];
@@ -54,36 +58,26 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold flex items-center gap-2 mb-6">
-          <BarChart3 className="h-6 w-6 text-gold" />
-          Analytics
-        </h1>
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="p-6 max-w-5xl mx-auto">
+        <h1 className="font-heading text-xl font-semibold tracking-wide mb-6">Analytics</h1>
+        <p className="text-muted-foreground text-sm">Loading...</p>
       </div>
     );
   }
 
   if (data.length === 0) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold flex items-center gap-2 mb-6">
-          <BarChart3 className="h-6 w-6 text-gold" />
-          Analytics
-        </h1>
-        <Card>
-          <CardContent className="h-80 flex items-center justify-center text-muted-foreground">
-            No scored quests yet. Complete and score some quests to see analytics.
-          </CardContent>
-        </Card>
+      <div className="p-6 max-w-5xl mx-auto">
+        <h1 className="font-heading text-xl font-semibold tracking-wide mb-6">Analytics</h1>
+        <div className="card-rpg rounded-sm h-64 flex items-center justify-center text-muted-foreground text-sm">
+          No scored quests yet. Complete and score some quests to see analytics.
+        </div>
       </div>
     );
   }
 
-  // Get unique architectures
   const architectures = [...new Set(data.map((d) => d.architecture_type))];
 
-  // Transform for grouped bar chart: one entry per difficulty, with arch scores as fields
   const scoreByDifficulty = DIFF_ORDER.map((diff) => {
     const entry: Record<string, string | number> = { difficulty: `${diff}-Rank` };
     for (const arch of architectures) {
@@ -95,7 +89,6 @@ export default function AnalyticsPage() {
     return entry;
   });
 
-  // Time by difficulty
   const timeByDifficulty = DIFF_ORDER.map((diff) => {
     const entry: Record<string, string | number> = { difficulty: `${diff}-Rank` };
     for (const arch of architectures) {
@@ -107,7 +100,6 @@ export default function AnalyticsPage() {
     return entry;
   });
 
-  // Win rate by architecture (aggregate across difficulties)
   const winRateByArch = architectures.map((arch) => {
     const entries = data.filter((d) => d.architecture_type === arch);
     const totalWins = entries.reduce((s, e) => s + e.win_rate * e.count, 0);
@@ -119,7 +111,6 @@ export default function AnalyticsPage() {
     };
   }).sort((a, b) => b.win_rate - a.win_rate);
 
-  // Scatter: score vs time for each attempt group
   const scatterData = data.map((d) => ({
     x: d.avg_time,
     y: d.avg_score,
@@ -129,31 +120,23 @@ export default function AnalyticsPage() {
   }));
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold flex items-center gap-2">
-        <BarChart3 className="h-6 w-6 text-gold" />
-        Analytics
-      </h1>
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <h1 className="font-heading text-xl font-semibold tracking-wide">Analytics</h1>
 
-      {/* THE money chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Average Score by Architecture & Difficulty</CardTitle>
-        </CardHeader>
-        <CardContent>
+      {/* Score by difficulty */}
+      <div className="card-rpg rounded-sm">
+        <div className="px-5 py-3 border-b border-border/40">
+          <h2 className="font-heading text-xs font-semibold tracking-wider uppercase text-muted-foreground">
+            Average Score by Architecture & Difficulty
+          </h2>
+        </div>
+        <div className="p-5">
           <ResponsiveContainer width="100%" height={350}>
             <BarChart data={scoreByDifficulty}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="difficulty" stroke="#94a3b8" />
-              <YAxis domain={[0, 100]} stroke="#94a3b8" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1a1a2e",
-                  border: "1px solid #1e293b",
-                  borderRadius: "8px",
-                }}
-                labelStyle={{ color: "#e2e8f0" }}
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A24" />
+              <XAxis dataKey="difficulty" stroke="#7A7462" tick={{ fontSize: 11 }} />
+              <YAxis domain={[0, 100]} stroke="#7A7462" tick={{ fontSize: 11 }} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: "#C4B998" }} />
               <Legend
                 formatter={(value: string) =>
                   ARCHITECTURE_LABELS[value] ?? value
@@ -163,37 +146,30 @@ export default function AnalyticsPage() {
                 <Bar
                   key={arch}
                   dataKey={arch}
-                  fill={ARCH_COLORS[arch] ?? "#888"}
-                  radius={[4, 4, 0, 0]}
+                  fill={ARCH_COLORS[arch] ?? "#666"}
+                  radius={[2, 2, 0, 0]}
                 />
               ))}
             </BarChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Completion time */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">
-              Avg Completion Time by Difficulty (seconds)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
+        <div className="card-rpg rounded-sm">
+          <div className="px-5 py-3 border-b border-border/40">
+            <h2 className="font-heading text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
+              Completion Time by Difficulty (s)
+            </h2>
+          </div>
+          <div className="p-5">
+            <ResponsiveContainer width="100%" height={260}>
               <BarChart data={timeByDifficulty}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="difficulty" stroke="#94a3b8" />
-                <YAxis stroke="#94a3b8" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1a1a2e",
-                    border: "1px solid #1e293b",
-                    borderRadius: "8px",
-                  }}
-                  labelStyle={{ color: "#e2e8f0" }}
-                />
+                <CartesianGrid strokeDasharray="3 3" stroke="#2A2A24" />
+                <XAxis dataKey="difficulty" stroke="#7A7462" tick={{ fontSize: 11 }} />
+                <YAxis stroke="#7A7462" tick={{ fontSize: 11 }} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: "#C4B998" }} />
                 <Legend
                   formatter={(value: string) =>
                     ARCHITECTURE_LABELS[value] ?? value
@@ -203,82 +179,77 @@ export default function AnalyticsPage() {
                   <Bar
                     key={arch}
                     dataKey={arch}
-                    fill={ARCH_COLORS[arch] ?? "#888"}
-                    radius={[4, 4, 0, 0]}
+                    fill={ARCH_COLORS[arch] ?? "#666"}
+                    radius={[2, 2, 0, 0]}
                   />
                 ))}
               </BarChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Win rate */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Win Rate by Architecture</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
+        <div className="card-rpg rounded-sm">
+          <div className="px-5 py-3 border-b border-border/40">
+            <h2 className="font-heading text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
+              Win Rate by Architecture
+            </h2>
+          </div>
+          <div className="p-5">
+            <ResponsiveContainer width="100%" height={260}>
               <BarChart data={winRateByArch} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis type="number" domain={[0, 100]} stroke="#94a3b8" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#2A2A24" />
+                <XAxis type="number" domain={[0, 100]} stroke="#7A7462" tick={{ fontSize: 11 }} />
                 <YAxis
                   type="category"
                   dataKey="name"
-                  stroke="#94a3b8"
+                  stroke="#7A7462"
                   width={100}
+                  tick={{ fontSize: 11 }}
                 />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1a1a2e",
-                    border: "1px solid #1e293b",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Bar dataKey="win_rate" radius={[0, 4, 4, 0]}>
+                <Tooltip contentStyle={TOOLTIP_STYLE} />
+                <Bar dataKey="win_rate" radius={[0, 2, 2, 0]}>
                   {winRateByArch.map((entry) => (
                     <Cell
                       key={entry.architecture_type}
-                      fill={ARCH_COLORS[entry.architecture_type] ?? "#888"}
+                      fill={ARCH_COLORS[entry.architecture_type] ?? "#666"}
                     />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      {/* Score vs Time scatter */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">
-            Score vs Completion Time (Quality-Speed Tradeoff)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      {/* Scatter */}
+      <div className="card-rpg rounded-sm">
+        <div className="px-5 py-3 border-b border-border/40">
+          <h2 className="font-heading text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
+            Score vs Completion Time
+          </h2>
+        </div>
+        <div className="p-5">
           <ResponsiveContainer width="100%" height={300}>
             <ScatterChart>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A24" />
               <XAxis
                 dataKey="x"
                 name="Time (s)"
-                stroke="#94a3b8"
-                label={{ value: "Time (seconds)", position: "bottom", fill: "#94a3b8" }}
+                stroke="#7A7462"
+                tick={{ fontSize: 11 }}
+                label={{ value: "Time (s)", position: "bottom", fill: "#7A7462", fontSize: 10 }}
               />
               <YAxis
                 dataKey="y"
                 name="Score"
                 domain={[0, 100]}
-                stroke="#94a3b8"
-                label={{ value: "Score", angle: -90, position: "insideLeft", fill: "#94a3b8" }}
+                stroke="#7A7462"
+                tick={{ fontSize: 11 }}
+                label={{ value: "Score", angle: -90, position: "insideLeft", fill: "#7A7462", fontSize: 10 }}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1a1a2e",
-                  border: "1px solid #1e293b",
-                  borderRadius: "8px",
-                }}
+                contentStyle={TOOLTIP_STYLE}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 formatter={((value: any, name: any) => [String(value), name === "x" ? "Time (s)" : "Score"]) as any}
               />
@@ -287,14 +258,14 @@ export default function AnalyticsPage() {
                   key={arch}
                   name={ARCHITECTURE_LABELS[arch] ?? arch}
                   data={scatterData.filter((d) => d.arch === arch)}
-                  fill={ARCH_COLORS[arch] ?? "#888"}
+                  fill={ARCH_COLORS[arch] ?? "#666"}
                 />
               ))}
               <Legend />
             </ScatterChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

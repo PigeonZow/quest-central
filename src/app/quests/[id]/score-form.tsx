@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -56,17 +55,17 @@ export function ScoreForm({ questId, attempts }: ScoreFormProps) {
   }
 
   return (
-    <Card className="border-gold/30">
-      <CardHeader>
-        <CardTitle className="text-sm text-gold">
+    <div className="card-rpg rounded-sm border-gold/20">
+      <div className="px-5 py-3 border-b border-border/40">
+        <h2 className="font-heading text-[10px] font-semibold tracking-wider uppercase text-gold">
           Score Submissions
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        </h2>
+      </div>
+      <div className="px-5 py-4 space-y-5">
         {submittedAttempts.map((attempt) => (
           <div key={attempt.id} className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-medium text-sm">
+              <span className="font-heading text-sm font-medium">
                 {attempt.party?.name}
               </span>
               <span className="font-mono text-sm">
@@ -91,7 +90,7 @@ export function ScoreForm({ questId, attempts }: ScoreFormProps) {
               rows={1}
               className="text-xs"
             />
-            <label className="flex items-center gap-2 text-xs cursor-pointer">
+            <label className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground">
               <input
                 type="radio"
                 name="winner"
@@ -106,11 +105,11 @@ export function ScoreForm({ questId, attempts }: ScoreFormProps) {
         <Button
           onClick={handleScore}
           disabled={loading || !winnerId}
-          className="w-full"
+          className="w-full rounded-sm text-xs uppercase tracking-wider"
         >
           {loading ? "Scoring..." : "Finalize Scores & Pick Winner"}
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

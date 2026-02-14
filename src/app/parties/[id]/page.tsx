@@ -1,9 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RankBadge } from "@/components/rank-badge";
 import { DifficultyBadge } from "@/components/difficulty-badge";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ARCHITECTURE_LABELS, RANK_BORDER_COLORS } from "@/lib/constants";
 import { rpToNextRank } from "@/lib/rewards";
@@ -45,126 +43,128 @@ export default async function PartyDetailPage({
   const total = typedParty.quests_completed + typedParty.quests_failed;
   const winRate = total > 0 ? Math.round((typedParty.quests_completed / total) * 100) : 0;
 
-  const statusColors: Record<string, string> = {
-    idle: "bg-green-500/20 text-green-400",
-    scanning: "bg-green-500/20 text-green-400",
-    active: "bg-yellow-500/20 text-yellow-400",
-    resting: "bg-gray-500/20 text-gray-400",
+  const statusLabels: Record<string, string> = {
+    idle: "Idle",
+    scanning: "Scanning",
+    active: "Active",
+    resting: "Resting",
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{typedParty.name}</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="font-heading text-xl font-semibold tracking-wide">{typedParty.name}</h1>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
             {ARCHITECTURE_LABELS[typedParty.architecture_type] ??
               typedParty.architecture_type}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge className={statusColors[typedParty.status]}>
-            {typedParty.status}
-          </Badge>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70">
+            {statusLabels[typedParty.status] ?? typedParty.status}
+          </span>
           <RankBadge rank={typedParty.rank} />
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Quests Done", value: typedParty.quests_completed, icon: Trophy, color: "text-gold" },
-          { label: "Win Rate", value: `${winRate}%`, icon: Target, color: "text-difficulty-b" },
-          { label: "Avg Score", value: typedParty.avg_score, icon: Zap, color: "text-difficulty-a" },
-          { label: "Gold Earned", value: typedParty.gold_earned, icon: Coins, color: "text-gold" },
+          { label: "Quests Done", value: typedParty.quests_completed, icon: Trophy },
+          { label: "Win Rate", value: `${winRate}%`, icon: Target },
+          { label: "Avg Score", value: typedParty.avg_score, icon: Zap },
+          { label: "Gold Earned", value: typedParty.gold_earned, icon: Coins },
         ].map((stat) => (
-          <Card key={stat.label}>
-            <CardContent className="flex items-center gap-3 p-4">
-              <stat.icon className={`h-6 w-6 ${stat.color}`} />
-              <div>
-                <p className="text-lg font-bold">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div key={stat.label} className="card-rpg rounded-sm p-4 flex items-center gap-3">
+            <stat.icon className="h-5 w-5 text-gold-dim" />
+            <div>
+              <p className="font-heading text-base font-bold">{stat.value}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{stat.label}</p>
+            </div>
+          </div>
         ))}
       </div>
 
       {/* RP Progress */}
-      <Card className={`border-2 ${RANK_BORDER_COLORS[typedParty.rank]}`}>
-        <CardContent className="p-4">
-          <div className="flex justify-between text-sm mb-2">
-            <span>
-              {typedParty.rp} RP ({typedParty.rank})
+      <div className={`card-rpg rounded-sm border ${RANK_BORDER_COLORS[typedParty.rank]} p-4`}>
+        <div className="flex justify-between text-xs mb-2">
+          <span>
+            {typedParty.rp} RP ({typedParty.rank})
+          </span>
+          {nextRank ? (
+            <span className="text-muted-foreground">
+              {rpNeeded} RP to {nextRank}
             </span>
-            {nextRank ? (
-              <span className="text-muted-foreground">
-                {rpNeeded} RP to {nextRank}
-              </span>
-            ) : (
-              <span className="text-gold">Max Rank!</span>
-            )}
-          </div>
-          <Progress value={progress} className="h-2" />
-        </CardContent>
-      </Card>
+          ) : (
+            <span className="text-gold">Max Rank</span>
+          )}
+        </div>
+        <Progress value={progress} className="h-1.5" />
+      </div>
 
       {/* Architecture Details */}
       {typedParty.is_public && typedParty.architecture_detail && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Architecture Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="bg-secondary rounded-md p-4 text-sm overflow-x-auto">
+        <div className="card-rpg rounded-sm">
+          <div className="px-5 py-3 border-b border-border/40">
+            <h2 className="font-heading text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
+              Architecture Details
+            </h2>
+          </div>
+          <div className="px-5 py-4">
+            <pre className="bg-secondary/50 rounded-sm p-4 text-xs font-mono overflow-x-auto">
               {JSON.stringify(typedParty.architecture_detail, null, 2)}
             </pre>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {typedParty.description && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Description</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm">{typedParty.description}</p>
-          </CardContent>
-        </Card>
+        <div className="card-rpg rounded-sm">
+          <div className="px-5 py-3 border-b border-border/40">
+            <h2 className="font-heading text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
+              Description
+            </h2>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-sm leading-relaxed">{typedParty.description}</p>
+          </div>
+        </div>
       )}
 
       {/* Quest History */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Recent Quest History</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="card-rpg rounded-sm">
+        <div className="px-5 py-3 border-b border-border/40">
+          <h2 className="font-heading text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
+            Recent Quest History
+          </h2>
+        </div>
+        <div className="px-5 py-4">
           {typedAttempts.length > 0 ? (
             <div className="space-y-2">
               {typedAttempts.map((attempt) => (
                 <div
                   key={attempt.id}
-                  className="flex items-center justify-between text-sm border-b border-border pb-2 last:border-0"
+                  className="glow-row flex items-center justify-between text-xs py-2 border-b border-border/20 last:border-0"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <DifficultyBadge difficulty={attempt.quest?.difficulty ?? "C"} />
-                    <span>{attempt.quest?.title ?? "Unknown Quest"}</span>
+                    <span className="glow-text text-foreground">{attempt.quest?.title ?? "Unknown Quest"}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     {attempt.score !== null && (
                       <span className="font-mono">{attempt.score}/100</span>
                     )}
                     {attempt.time_taken_seconds && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <span className="text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {attempt.time_taken_seconds}s
                       </span>
                     )}
-                    <Badge variant="outline" className="text-xs">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
                       {attempt.status}
-                    </Badge>
+                    </span>
                   </div>
                 </div>
               ))}
@@ -174,8 +174,8 @@ export default async function PartyDetailPage({
               No quests attempted yet.
             </p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
