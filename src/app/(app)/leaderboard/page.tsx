@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { RankBadge } from "@/components/rank-badge";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import type { Party } from "@/lib/types";
 
 export default async function LeaderboardPage() {
@@ -12,6 +13,7 @@ export default async function LeaderboardPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <RealtimeRefresh tables={["parties", "quest_attempts"]} />
       <h1 className="font-heading text-xl font-semibold tracking-wide">Leaderboard</h1>
 
       <div className="card-rpg rounded-sm overflow-visible">
