@@ -46,10 +46,7 @@ export default async function DashboardPage() {
     <div className="p-6 max-w-5xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-xl font-semibold tracking-wide">Dashboard</h1>
-        <Link
-          href="/quests/new"
-          className="inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2 text-xs font-medium tracking-wide uppercase text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
+        <Link href="/quests/new" className="btn-banner">
           <Star className="h-3.5 w-3.5" />
           Post Quest
         </Link>
