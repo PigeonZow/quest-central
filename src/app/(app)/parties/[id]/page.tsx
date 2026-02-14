@@ -6,110 +6,8 @@ import { Progress } from "@/components/ui/progress";
 import { RANK_BORDER_COLORS } from "@/lib/constants";
 import { getCurrentUserId } from "@/lib/current-user";
 import { rpToNextRank } from "@/lib/rewards";
-import { Trophy, Target, Zap, Coins, Clock, Lock, Cpu, ArrowRight, GitBranch } from "lucide-react";
+import { Trophy, Coins, Clock, Lock, Cpu } from "lucide-react";
 import type { Party, QuestAttempt } from "@/lib/types";
-
-/* ─── Architecture Diagram ─── */
-function ArchDiagram({ type, detail }: { type: string; detail: Record<string, unknown> }) {
-  const agentCount = (detail?.agent_count as number) ?? 1;
-
-  const Box = ({ label, accent }: { label: string; accent?: boolean }) => (
-    <div
-      className={`px-3 py-2 rounded border text-[10px] font-mono uppercase tracking-wider text-center min-w-[80px] ${
-        accent
-          ? "border-gold/40 bg-gold/5 text-gold"
-          : "border-border/40 bg-secondary/30 text-muted-foreground"
-      }`}
-    >
-      {label}
-    </div>
-  );
-
-  const Arrow = () => <ArrowRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />;
-
-  if (type === "single_call") {
-    return (
-      <div className="flex items-center gap-3 justify-center py-4">
-        <Box label="Input" />
-        <Arrow />
-        <Box label="Claude" accent />
-        <Arrow />
-        <Box label="Output" />
-      </div>
-    );
-  }
-
-  if (type === "pipeline" || type === "multi_agent") {
-    const stages = (detail?.stages as string[]) ?? ["Plan", "Execute", "Review"];
-    return (
-      <div className="flex items-center gap-2 justify-center py-4 flex-wrap">
-        <Box label="Input" />
-        {stages.map((s, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <Arrow />
-            <Box label={s} accent />
-          </div>
-        ))}
-        <Arrow />
-        <Box label="Output" />
-      </div>
-    );
-  }
-
-  if (type === "swarm") {
-    return (
-      <div className="py-4 space-y-3">
-        <div className="flex items-center gap-3 justify-center">
-          <Box label="Input" />
-          <Arrow />
-          <Box label="Coordinator" accent />
-        </div>
-        <div className="flex items-center gap-2 justify-center">
-          <GitBranch className="h-3 w-3 text-muted-foreground/40 rotate-180" />
-          {Array.from({ length: Math.min(agentCount, 6) }).map((_, i) => (
-            <Box key={i} label={`Agent ${i + 1}`} />
-          ))}
-          {agentCount > 6 && (
-            <span className="text-[10px] text-muted-foreground">+{agentCount - 6}</span>
-          )}
-        </div>
-        <div className="flex items-center gap-3 justify-center">
-          <Box label="Aggregator" accent />
-          <Arrow />
-          <Box label="Output" />
-        </div>
-      </div>
-    );
-  }
-
-  if (type === "crew") {
-    const roles = (detail?.roles as string[]) ?? (detail?.stages as string[]) ?? ["Agent"];
-    return (
-      <div className="flex items-center gap-2 justify-center py-4 flex-wrap">
-        <Box label="Input" />
-        {roles.map((r, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <Arrow />
-            <Box label={r} accent />
-          </div>
-        ))}
-        <Arrow />
-        <Box label="Output" />
-      </div>
-    );
-  }
-
-  // custom / fallback
-  return (
-    <div className="flex items-center gap-3 justify-center py-4">
-      <Box label="Input" />
-      <Arrow />
-      <Box label={`${agentCount} Agent${agentCount > 1 ? "s" : ""}`} accent />
-      <Arrow />
-      <Box label="Output" />
-    </div>
-  );
-}
 
 /* ─── Status Colors ─── */
 const STATUS_COLORS: Record<string, string> = {
@@ -152,9 +50,6 @@ export default async function PartyDetailPage({
     typedParty.rank,
     typedParty.rp
   );
-  const total = typedParty.quests_completed + typedParty.quests_failed;
-  const winRate = total > 0 ? Math.round((typedParty.quests_completed / total) * 100) : 0;
-
   const detail = (typedParty.architecture_detail ?? {}) as Record<string, unknown>;
   const isOwner = typedParty.owner_id === currentUserId;
 
@@ -182,11 +77,9 @@ export default async function PartyDetailPage({
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {[
           { label: "Quests Done", value: typedParty.quests_completed, icon: Trophy },
-          { label: "Win Rate", value: `${winRate}%`, icon: Target },
-          { label: "Avg Score", value: typedParty.avg_score, icon: Zap },
           { label: "Gold Earned", value: `${typedParty.gold_earned.toLocaleString()}G`, icon: Coins },
         ].map((stat) => (
           <div key={stat.label} className="card-rpg rounded-sm p-4 flex items-center gap-3">
@@ -230,24 +123,25 @@ export default async function PartyDetailPage({
         </div>
 
         {isOwner ? (
-          <div className="px-5 py-2">
-            {/* Visual diagram */}
-            <ArchDiagram type={typedParty.architecture_type ?? "custom"} detail={detail} />
-
-            {/* Key specs */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-border/20">
+          <div className="px-5 py-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               {[
                 { label: "Agents", value: (detail.agent_count as number) ?? 1 },
-                { label: "Parallel", value: (detail.parallel as boolean) ? "Yes" : "No" },
-                { label: "Tools", value: (detail.tools_enabled as boolean) ? "Enabled" : "None" },
-                { label: "Framework", value: (detail.framework as string) ?? "Custom" },
+                { label: "Model", value: (detail.model as string) || "Not specified" },
+                { label: "Tools", value: (detail.tools as string) || "None" },
               ].map((spec) => (
-                <div key={spec.label} className="text-center">
-                  <p className="text-sm font-mono font-bold text-foreground">{String(spec.value)}</p>
-                  <p className="text-[9px] uppercase tracking-wider text-muted-foreground">{spec.label}</p>
+                <div key={spec.label}>
+                  <p className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">{spec.label}</p>
+                  <p className="text-sm font-mono text-foreground">{String(spec.value)}</p>
                 </div>
               ))}
             </div>
+            {typeof detail.notes === "string" && detail.notes && (
+              <div>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">Notes</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{String(detail.notes)}</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="px-5 py-8 text-center">
@@ -268,14 +162,7 @@ export default async function PartyDetailPage({
         <div className="px-5 py-4">
           {typedAttempts.length > 0 ? (
             <div className="space-y-2">
-              {typedAttempts.map((attempt) => {
-                const scoreColor =
-                  (attempt.score ?? 0) >= 70
-                    ? "text-green-400"
-                    : (attempt.score ?? 0) >= 50
-                    ? "text-yellow-400"
-                    : "text-red-400";
-                return (
+              {typedAttempts.map((attempt) => (
                   <div
                     key={attempt.id}
                     className="glow-row flex items-center justify-between text-xs py-2 border-b border-border/20 last:border-0"
@@ -285,8 +172,10 @@ export default async function PartyDetailPage({
                       <span className="glow-text text-foreground">{attempt.quest?.title ?? "Unknown Quest"}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      {attempt.score !== null && (
-                        <span className={`font-mono font-bold ${scoreColor}`}>{attempt.score}/100</span>
+                      {attempt.ranking !== null && (
+                        <span className={`font-mono font-bold ${attempt.ranking === 1 ? "text-gold" : "text-muted-foreground"}`}>
+                          #{attempt.ranking}
+                        </span>
                       )}
                       {attempt.time_taken_seconds && (
                         <span className="text-muted-foreground flex items-center gap-1">
@@ -309,8 +198,7 @@ export default async function PartyDetailPage({
                       </span>
                     </div>
                   </div>
-                );
-              })}
+                ))}
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">

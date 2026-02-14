@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { authenticateParty } from "@/lib/external-auth";
 import { createServiceClient } from "@/lib/supabase/server";
-import { scoreAttempt } from "@/lib/oracle";
+import { evaluateAttempt, rankAttempts } from "@/lib/oracle";
 import { calculateRewards, determineRank } from "@/lib/rewards";
 
 export async function POST(
@@ -54,7 +54,7 @@ export async function POST(
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
-  // Fetch quest details for scoring
+  // Fetch quest details
   const { data: quest } = await supabase
     .from("quests")
     .select("*")
@@ -79,34 +79,35 @@ export async function POST(
     },
   });
 
-  // ─── Oracle Auto-Scoring (fire-and-forget) ───
-  // Score async so the agent gets a fast response
+  // ─── Oracle Auto-Evaluation (fire-and-forget) ───
+  // Evaluate async so the agent gets a fast response
   if (quest && body.result_text) {
-    scoreAndReward(
+    evaluateAndRank(
       supabase,
       attempt.id,
       party.id,
       quest,
       body.result_text
-    ).catch((err) => console.error("[Oracle] Scoring error:", err));
+    ).catch((err) => console.error("[Oracle] Evaluation error:", err));
   }
 
   return NextResponse.json(updated);
 }
 
 /**
- * Score the attempt via the Oracle, distribute rewards, and update party stats.
+ * Evaluate the attempt via the Oracle. When all attempts for a quest are
+ * submitted, rank them and distribute rewards.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function scoreAndReward(
+async function evaluateAndRank(
   supabase: any,
   attemptId: string,
   partyId: string,
   quest: { id: string; title: string; description: string; acceptance_criteria: string | null; difficulty: string; gold_reward: number },
   resultText: string
 ) {
-  // 1. Score via Oracle
-  const verdict = await scoreAttempt(
+  // 1. Evaluate via Oracle (get feedback, no numeric score)
+  const verdict = await evaluateAttempt(
     quest.title,
     quest.description,
     quest.acceptance_criteria,
@@ -114,85 +115,32 @@ async function scoreAndReward(
     resultText
   );
 
-  console.log(`[Oracle] Scored attempt ${attemptId.slice(0, 8)}: ${verdict.score}/100 — ${verdict.feedback}`);
+  console.log(`[Oracle] Evaluated attempt ${attemptId.slice(0, 8)}: ${verdict.feedback}`);
 
-  // 2. Update attempt with score
+  // 2. Update attempt with Oracle feedback
   await supabase
     .from("quest_attempts")
     .update({
       status: "scored",
-      score: verdict.score,
       questgiver_feedback: verdict.feedback,
       scored_at: new Date().toISOString(),
     })
     .eq("id", attemptId);
 
-  // 3. Calculate rewards (passing score = 50+)
-  const isWinner = verdict.score >= 70;
-  const rewards = calculateRewards(quest.difficulty, verdict.score, isWinner);
-
-  // 4. Update party stats
-  const { data: currentParty } = await supabase
-    .from("parties")
-    .select("rp, gold_earned, quests_completed, quests_failed, avg_score")
-    .eq("id", partyId)
-    .single();
-
-  if (currentParty) {
-    const totalCompleted = currentParty.quests_completed + (verdict.score >= 50 ? 1 : 0);
-    const totalFailed = currentParty.quests_failed + (verdict.score < 50 ? 1 : 0);
-    const newRp = currentParty.rp + rewards.rp;
-    const newGold = currentParty.gold_earned + rewards.gold;
-    // Running average score
-    const totalAttempts = currentParty.quests_completed + currentParty.quests_failed;
-    const newAvg = totalAttempts > 0
-      ? Math.round(((currentParty.avg_score * totalAttempts) + verdict.score) / (totalAttempts + 1))
-      : verdict.score;
-    const newRank = determineRank(newRp);
-
-    await supabase
-      .from("parties")
-      .update({
-        rp: newRp,
-        gold_earned: newGold,
-        quests_completed: totalCompleted,
-        quests_failed: totalFailed,
-        avg_score: newAvg,
-        rank: newRank,
-      })
-      .eq("id", partyId);
-
-    // Log rank up if it changed
-    if (newRank !== determineRank(currentParty.rp)) {
-      await supabase.from("activity_log").insert({
-        event_type: "rank_up",
-        party_id: partyId,
-        details: {
-          old_rank: determineRank(currentParty.rp),
-          new_rank: newRank,
-          rp: newRp,
-        },
-      });
-    }
-  }
-
-  // 5. Log scored activity
+  // 3. Log evaluation activity
   await supabase.from("activity_log").insert({
     event_type: "quest_scored",
     party_id: partyId,
     quest_id: quest.id,
     details: {
-      score: verdict.score,
       feedback: verdict.feedback,
-      gold_earned: rewards.gold,
-      rp_earned: rewards.rp,
     },
   });
 
-  // 6. Check if all attempts for this quest are scored → pick winner
+  // 4. Check if all attempts for this quest are evaluated → rank them
   const { data: allAttempts } = await supabase
     .from("quest_attempts")
-    .select("id, score, party_id, status")
+    .select("id, result_text, party_id, status")
     .eq("quest_id", quest.id)
     .in("status", ["scored"]);
 
@@ -203,42 +151,95 @@ async function scoreAndReward(
     .in("status", ["in_progress", "submitted"]);
 
   if ((pendingCount ?? 0) === 0 && allAttempts && allAttempts.length > 0) {
-    // All done — pick the highest scorer as winner
-    const sorted = [...allAttempts].sort((a: { score: number }, b: { score: number }) => (b.score ?? 0) - (a.score ?? 0));
-    const winner = sorted[0];
+    // All done — Oracle ranks all attempts
+    const rankedOrder = await rankAttempts(
+      quest.title,
+      quest.description,
+      quest.acceptance_criteria,
+      allAttempts.map((a: { id: string; result_text: string }) => ({
+        id: a.id,
+        result_text: a.result_text,
+      }))
+    );
 
-    // Mark winner
-    await supabase
-      .from("quest_attempts")
-      .update({ status: "won" })
-      .eq("id", winner.id);
+    for (let i = 0; i < rankedOrder.length; i++) {
+      const entry = rankedOrder[i];
+      const ranking = i + 1;
+      const isWinner = ranking === 1;
 
-    // Mark losers
-    const loserIds = sorted.slice(1).map((a: { id: string }) => a.id);
-    if (loserIds.length > 0) {
+      // Update attempt with ranking and status
       await supabase
         .from("quest_attempts")
-        .update({ status: "lost" })
-        .in("id", loserIds);
+        .update({
+          ranking,
+          status: isWinner ? "won" : "lost",
+        })
+        .eq("id", entry.id);
+
+      // Get party and distribute rewards
+      const matchingAttempt = allAttempts.find((a: { id: string }) => a.id === entry.id);
+      if (!matchingAttempt) continue;
+
+      const rewards = calculateRewards(quest.gold_reward, quest.difficulty, ranking);
+
+      const { data: currentParty } = await supabase
+        .from("parties")
+        .select("rp, gold_earned, quests_completed, quests_failed")
+        .eq("id", matchingAttempt.party_id)
+        .single();
+
+      if (currentParty) {
+        const newRp = currentParty.rp + rewards.rp;
+        const newGold = currentParty.gold_earned + rewards.gold;
+        const newCompleted = currentParty.quests_completed + (isWinner ? 1 : 0);
+        const newFailed = currentParty.quests_failed + (isWinner ? 0 : 1);
+        const newRank = determineRank(newRp);
+
+        await supabase
+          .from("parties")
+          .update({
+            rp: newRp,
+            gold_earned: newGold,
+            quests_completed: newCompleted,
+            quests_failed: newFailed,
+            rank: newRank,
+          })
+          .eq("id", matchingAttempt.party_id);
+
+        // Log rank up if changed
+        if (newRank !== determineRank(currentParty.rp)) {
+          await supabase.from("activity_log").insert({
+            event_type: "rank_up",
+            party_id: matchingAttempt.party_id,
+            details: {
+              old_rank: determineRank(currentParty.rp),
+              new_rank: newRank,
+              rp: newRp,
+            },
+          });
+        }
+      }
     }
 
     // Complete the quest
+    const winnerId = rankedOrder[0]?.id;
     await supabase
       .from("quests")
       .update({
         status: "completed",
-        winning_attempt_id: winner.id,
+        winning_attempt_id: winnerId,
       })
       .eq("id", quest.id);
 
     // Log quest completion
+    const winnerAttempt = allAttempts.find((a: { id: string }) => a.id === winnerId);
     await supabase.from("activity_log").insert({
       event_type: "quest_completed",
       quest_id: quest.id,
-      party_id: winner.party_id,
+      party_id: winnerAttempt?.party_id,
       details: {
         quest_title: quest.title,
-        winning_score: winner.score,
+        winner_attempt_id: winnerId,
       },
     });
   }

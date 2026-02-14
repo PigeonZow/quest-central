@@ -102,14 +102,8 @@ export default async function QuestDetailPage({
           {typedAttempts.length > 0 ? (
             <div className="space-y-3">
               {typedAttempts
-                .sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
-                .map((attempt, index) => {
-                const scoreColor =
-                  (attempt.score ?? 0) >= 70
-                    ? "text-green-400"
-                    : (attempt.score ?? 0) >= 50
-                    ? "text-yellow-400"
-                    : "text-red-400";
+                .sort((a, b) => (a.ranking ?? 999) - (b.ranking ?? 999))
+                .map((attempt) => {
                 const isWinner = attempt.status === "won";
                 return (
                 <div
@@ -125,17 +119,17 @@ export default async function QuestDetailPage({
                       {isWinner && (
                         <Trophy className="h-4 w-4 text-gold" />
                       )}
+                      {attempt.ranking !== null && (
+                        <span className={`font-heading text-sm font-bold ${isWinner ? "text-gold" : "text-muted-foreground"}`}>
+                          #{attempt.ranking}
+                        </span>
+                      )}
                       <span className="font-heading text-sm font-medium">
                         {attempt.party?.name ?? "Unknown Party"}
                       </span>
                       <RankBadge rank={attempt.party?.rank ?? "Bronze"} />
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      {attempt.score !== null && (
-                        <span className={`font-mono text-sm font-bold ${scoreColor}`}>
-                          {attempt.score}/100
-                        </span>
-                      )}
                       {attempt.time_taken_seconds && (
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />

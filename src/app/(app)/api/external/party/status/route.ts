@@ -13,7 +13,5 @@ export async function GET(request: Request) {
     rank: party.rank,
     gold_earned: party.gold_earned,
     quests_completed: party.quests_completed,
-    quests_failed: party.quests_failed,
-    avg_score: party.avg_score,
   });
 }

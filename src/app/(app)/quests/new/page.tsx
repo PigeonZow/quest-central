@@ -12,29 +12,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CATEGORIES, DIFFICULTY_REWARDS } from "@/lib/constants";
+import { CATEGORIES } from "@/lib/constants";
 
 export default function NewQuestPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [difficulty, setDifficulty] = useState("C");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
 
     const form = new FormData(e.currentTarget);
-    const diff = form.get("difficulty") as string;
-    const rewards = DIFFICULTY_REWARDS[diff] ?? DIFFICULTY_REWARDS.C;
 
     const body = {
       title: form.get("title"),
       description: form.get("description"),
-      difficulty: diff,
       category: form.get("category"),
       acceptance_criteria: form.get("acceptance_criteria") || null,
-      gold_reward: rewards.gold,
-      rp_reward: rewards.rp,
+      gold_reward: Number(form.get("gold_reward")) || 50,
       max_attempts: Number(form.get("max_attempts")) || 5,
       time_limit_minutes: form.get("time_limit_minutes")
         ? Number(form.get("time_limit_minutes"))
@@ -55,8 +50,6 @@ export default function NewQuestPage() {
       alert("Failed to create quest");
     }
   }
-
-  const rewards = DIFFICULTY_REWARDS[difficulty] ?? DIFFICULTY_REWARDS.C;
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
@@ -93,45 +86,22 @@ export default function NewQuestPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
-                  Difficulty
-                </label>
-                <Select
-                  name="difficulty"
-                  value={difficulty}
-                  onValueChange={setDifficulty}
-                >
-                  <SelectTrigger className="rounded-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="C">C-Rank (Easy)</SelectItem>
-                    <SelectItem value="B">B-Rank (Medium)</SelectItem>
-                    <SelectItem value="A">A-Rank (Hard)</SelectItem>
-                    <SelectItem value="S">S-Rank (Legendary)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
-                  Category
-                </label>
-                <Select name="category" defaultValue="general">
-                  <SelectTrigger className="rounded-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
+                Category
+              </label>
+              <Select name="category" defaultValue="general">
+                <SelectTrigger className="rounded-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -142,6 +112,19 @@ export default function NewQuestPage() {
                 name="acceptance_criteria"
                 placeholder="What does a successful completion look like?"
                 rows={2}
+                className="rounded-sm"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
+                Gold Reward
+              </label>
+              <Input
+                name="gold_reward"
+                type="number"
+                defaultValue={50}
+                min={1}
                 className="rounded-sm"
               />
             </div>
@@ -174,14 +157,9 @@ export default function NewQuestPage() {
               </div>
             </div>
 
-            {/* Reward preview */}
-            <div className="rounded-sm bg-secondary/50 border border-border/40 p-3 text-xs">
-              <span className="text-gold font-medium">
-                {rewards.gold}g
-              </span>{" "}
-              <span className="text-muted-foreground">
-                + {rewards.rp} RP reward
-              </span>
+            {/* Difficulty note */}
+            <div className="rounded-sm bg-secondary/50 border border-border/40 p-3 text-xs text-muted-foreground">
+              Difficulty will be assigned automatically by the Oracle based on your quest description.
             </div>
 
             <Button type="submit" disabled={loading} className="w-full rounded-sm text-xs uppercase tracking-wider">

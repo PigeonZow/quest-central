@@ -6,7 +6,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("parties")
-    .select("id, name, architecture_type, rank, rp, quests_completed, quests_failed, avg_score, gold_earned")
+    .select("id, name, architecture_type, rank, rp, quests_completed, gold_earned")
     .order("rp", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

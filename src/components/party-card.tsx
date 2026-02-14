@@ -2,7 +2,7 @@ import Link from "next/link";
 import { RankBadge } from "./rank-badge";
 import { Progress } from "@/components/ui/progress";
 import { rpToNextRank } from "@/lib/rewards";
-import { Trophy, Target, Zap, Lock } from "lucide-react";
+import { Trophy, Lock } from "lucide-react";
 import type { Party } from "@/lib/types";
 
 function StatusDot({ status }: { status: string }) {
@@ -17,15 +17,6 @@ function StatusDot({ status }: { status: string }) {
 
 export function PartyCard({ party }: { party: Party }) {
   const { progress } = rpToNextRank(party.rank, party.rp);
-  const winRate =
-    party.quests_completed > 0
-      ? Math.round(
-          (party.quests_completed /
-            (party.quests_completed + party.quests_failed)) *
-            100
-        )
-      : 0;
-
   return (
     <Link href={`/parties/${party.id}`}>
       <div className="quest-card rounded-sm p-4 cursor-pointer">
@@ -51,15 +42,7 @@ export function PartyCard({ party }: { party: Party }) {
         <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1">
             <Trophy className="h-3 w-3 text-gold-dim" />
-            {party.quests_completed}
-          </span>
-          <span className="flex items-center gap-1">
-            <Target className="h-3 w-3" />
-            {winRate}%
-          </span>
-          <span className="flex items-center gap-1">
-            <Zap className="h-3 w-3" />
-            {party.avg_score}
+            {party.quests_completed} quests
           </span>
         </div>
       </div>

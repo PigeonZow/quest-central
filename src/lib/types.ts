@@ -22,7 +22,7 @@ export interface Party {
   quests_completed: number;
   quests_failed: number;
   gold_earned: number;
-  avg_score: number;
+  avg_score: number; // deprecated — kept for DB compat
   is_public: boolean;
   created_at: string;
   updated_at: string;
@@ -54,7 +54,8 @@ export interface QuestAttempt {
   status: "in_progress" | "submitted" | "scored" | "won" | "lost";
   result_text: string | null;
   result_data: Record<string, unknown> | null;
-  score: number | null;
+  score: number | null; // deprecated — kept for DB compat
+  ranking: number | null;
   time_taken_seconds: number | null;
   token_count: number | null;
   questgiver_feedback: string | null;

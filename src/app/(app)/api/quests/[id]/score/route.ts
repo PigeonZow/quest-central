@@ -10,9 +10,8 @@ export async function POST(
   const supabase = await createClient();
   const body = await request.json();
 
-  const { scores, winner_id } = body as {
-    scores: { attempt_id: string; score: number; feedback: string | null }[];
-    winner_id: string;
+  const { rankings } = body as {
+    rankings: { attempt_id: string; ranking: number; feedback: string | null }[];
   };
 
   // Get quest info
@@ -26,16 +25,19 @@ export async function POST(
     return NextResponse.json({ error: "Quest not found" }, { status: 404 });
   }
 
-  // Score each attempt
-  for (const { attempt_id, score, feedback } of scores) {
-    const isWinner = attempt_id === winner_id;
+  let winnerId: string | null = null;
+
+  // Rank each attempt
+  for (const { attempt_id, ranking, feedback } of rankings) {
+    const isWinner = ranking === 1;
     const status = isWinner ? "won" : "lost";
+    if (isWinner) winnerId = attempt_id;
 
     // Update attempt
     await supabase
       .from("quest_attempts")
       .update({
-        score,
+        ranking,
         status,
         questgiver_feedback: feedback,
         scored_at: new Date().toISOString(),
@@ -51,8 +53,8 @@ export async function POST(
 
     if (!attempt) continue;
 
-    // Calculate rewards
-    const rewards = calculateRewards(quest.difficulty, score, isWinner);
+    // Calculate rewards based on ranking (winner takes all)
+    const rewards = calculateRewards(quest.gold_reward, quest.difficulty, ranking);
 
     // Get current party stats
     const { data: party } = await supabase
@@ -72,18 +74,6 @@ export async function POST(
       ? party.quests_failed
       : party.quests_failed + 1;
 
-    // Recalculate average score
-    const totalScored = newCompleted + newFailed;
-    const newAvgScore =
-      totalScored > 0
-        ? Number(
-            (
-              (party.avg_score * (totalScored - 1) + score) /
-              totalScored
-            ).toFixed(2)
-          )
-        : score;
-
     const newRank = determineRank(newRp);
     const rankedUp = newRank !== party.rank;
 
@@ -96,7 +86,6 @@ export async function POST(
         rank: newRank,
         quests_completed: newCompleted,
         quests_failed: newFailed,
-        avg_score: newAvgScore,
         status: "idle",
       })
       .eq("id", party.id);
@@ -121,7 +110,7 @@ export async function POST(
     .from("quests")
     .update({
       status: "completed",
-      winning_attempt_id: winner_id,
+      winning_attempt_id: winnerId,
     })
     .eq("id", id);
 
@@ -129,7 +118,7 @@ export async function POST(
   await supabase.from("activity_log").insert({
     event_type: "quest_completed",
     quest_id: id,
-    details: { title: quest.title, winner_attempt_id: winner_id },
+    details: { title: quest.title, winner_attempt_id: winnerId },
   });
 
   return NextResponse.json({ success: true });

@@ -1,16 +1,16 @@
 import { DIFFICULTY_REWARDS, RANKS, RANK_THRESHOLDS } from "./constants";
 
 export function calculateRewards(
+  goldReward: number,
   difficulty: string,
-  score: number,
-  isWinner: boolean
+  ranking: number,
 ) {
-  const base = DIFFICULTY_REWARDS[difficulty] ?? DIFFICULTY_REWARDS.C;
-  if (isWinner) {
-    return { gold: base.gold, rp: base.rp };
+  const rpReward = (DIFFICULTY_REWARDS[difficulty] ?? DIFFICULTY_REWARDS.C).rp;
+  // Winner takes all — only 1st place gets rewards
+  if (ranking === 1) {
+    return { gold: goldReward, rp: rpReward };
   }
-  // Losers get partial RP based on score, no gold
-  return { gold: 0, rp: Math.floor(base.rp * (score / 100) * 0.3) };
+  return { gold: 0, rp: 0 };
 }
 
 export function determineRank(totalRp: number): string {
