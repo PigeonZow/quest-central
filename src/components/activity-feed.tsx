@@ -16,21 +16,27 @@ interface ActivityEntry {
 
 function formatMessage(entry: ActivityEntry): string {
   const partyName = entry.party?.name ?? entry.details?.party_name ?? "A party";
-  const questTitle = entry.quest?.title ?? entry.details?.title ?? "a quest";
+  const questTitle = entry.quest?.title ?? entry.details?.title ?? entry.details?.quest_title ?? "a quest";
 
   switch (entry.event_type) {
     case "quest_posted":
       return `New quest posted: "${questTitle}"`;
     case "quest_accepted":
       return `${partyName} accepted "${questTitle}"`;
-    case "quest_submitted":
-      return `${partyName} submitted results for "${questTitle}"`;
-    case "quest_scored":
-      return `"${questTitle}" has been scored`;
+    case "quest_submitted": {
+      const time = entry.details?.time_taken_seconds;
+      return `${partyName} submitted results for "${questTitle}"${time ? ` (${time}s)` : ""}`;
+    }
+    case "quest_scored": {
+      const score = entry.details?.score;
+      const gold = entry.details?.gold_earned;
+      const rp = entry.details?.rp_earned;
+      return `Oracle scored ${partyName}: ${score}/100 on "${questTitle}"${gold ? ` → +${gold}G +${rp}RP` : ""}`;
+    }
     case "quest_completed":
-      return `Quest completed: "${questTitle}"`;
+      return `🏆 Quest completed: "${questTitle}"`;
     case "rank_up":
-      return `${partyName} ranked up to ${entry.details?.new_rank ?? "a new rank"}!`;
+      return `${partyName} ranked up to ${entry.details?.new_rank ?? "a new rank"}! 🎖️`;
     default:
       return entry.event_type;
   }

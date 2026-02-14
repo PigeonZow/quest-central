@@ -101,10 +101,10 @@ export default function LandingPage() {
             </Link>
             {/* framer-motion: wrap with motion.div for hover scale */}
             <Link
-              href="/quests/new"
+              href="/quests"
               className="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold tracking-wider uppercase bg-[#C8A84E] text-[#0D0D0D] rounded-sm hover:bg-[#E8C65A] transition-colors"
             >
-              List a Quest
+              Browse Quests
             </Link>
           </div>
         </div>
@@ -172,12 +172,12 @@ export default function LandingPage() {
             {/* framer-motion: motion.div with stagger children */}
             <div className="flex flex-wrap gap-4">
               <Link
-                href="/quests/new"
-                id="cta-list-quest"
+                href="/quests"
+                id="cta-browse-quests"
                 className="inline-flex items-center gap-2.5 px-7 py-3 text-sm font-bold tracking-wider uppercase bg-[#C8A84E] text-[#0D0D0D] rounded-sm hover:bg-[#E8C65A] transition-all hover:shadow-[0_0_30px_rgba(200,168,78,0.3)]"
               >
                 <Scroll className="h-4 w-4" />
-                List a Quest
+                Browse Quests
               </Link>
               <Link
                 href="/parties"
@@ -217,37 +217,33 @@ export default function LandingPage() {
                 </span>
               </div>
 
-              {/* Mock quest card */}
+              {/* Mock quest card — matches actual QuestCard component */}
               <div className="space-y-3">
-                <div className="border border-[#2A2A24] bg-[#151515] rounded-sm p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-[#C8A84E] block mb-1">
-                        Quest #0042
-                      </span>
-                      <h4 className="font-heading text-sm font-semibold text-[#E8D5A3]">
-                        Scrape & Synthesize Competitor Pricing
-                      </h4>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-sm bg-[#C8A84E]/10 text-[#C8A84E] border border-[#C8A84E]/20 font-bold">
-                      A-RANK
+                <div className="quest-card rounded-sm p-4">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <h4 className="font-heading text-sm font-semibold leading-tight text-foreground">
+                      Scrape & Synthesize Competitor Pricing
+                    </h4>
+                    <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-sm font-bold tracking-wider uppercase border border-[#C8A84E]/30 bg-[#C8A84E]/10 text-[#C8A84E]">
+                      A
                     </span>
                   </div>
-                  <p className="text-xs text-[#7A7462] mb-3">
+                  <p className="text-xs text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
                     Scrape pricing data from 5 competitor sites, normalize into
                     JSON, produce a comparison summary.
                   </p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-[11px] text-[#7A7462]">
-                      <span className="flex items-center gap-1">
-                        <Coins className="h-3 w-3 text-[#C8A84E]" />
-                        2,500G
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Swords className="h-3 w-3" />
-                        4 parties
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Coins className="h-3 w-3 text-[#C8A84E]" />
+                      2500g
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Swords className="h-3 w-3" />
+                      4
+                    </span>
+                    <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                      research
+                    </span>
                   </div>
                 </div>
 
@@ -503,11 +499,11 @@ export default function LandingPage() {
 
           {/* framer-motion: motion.a whileHover={{ scale: 1.05 }} */}
           <Link
-            href="/quests/new"
+            href="/quests"
             id="cta-join-network"
             className="inline-flex items-center gap-3 px-10 py-4 text-sm font-bold tracking-wider uppercase bg-[#C8A84E] text-[#0D0D0D] rounded-sm hover:bg-[#E8C65A] transition-all hover:shadow-[0_0_40px_rgba(200,168,78,0.35)] group"
           >
-            Join the Network
+            Browse Quests
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </Link>
 

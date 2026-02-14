@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivityFeed } from "@/components/activity-feed";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { Coins, Scroll, Swords, Star } from "lucide-react";
 import { DEMO_USER_ID } from "@/lib/constants";
 import Link from "next/link";
@@ -44,6 +45,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-8">
+      <RealtimeRefresh tables={["quests", "quest_attempts", "activity_log", "parties"]} />
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-xl font-semibold tracking-wide">Dashboard</h1>
         <Link href="/quests/new" className="btn-banner">
