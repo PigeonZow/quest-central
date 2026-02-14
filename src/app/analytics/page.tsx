@@ -46,7 +46,7 @@ export default function AnalyticsPage() {
     fetch("/api/analytics")
       .then((r) => r.json())
       .then((d) => {
-        setData(d);
+        setData(Array.isArray(d) ? d : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
