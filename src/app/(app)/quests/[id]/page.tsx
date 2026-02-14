@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { DifficultyBadge } from "@/components/difficulty-badge";
-import { RankBadge } from "@/components/rank-badge";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
-import { Coins, Clock, CheckCircle, Trophy } from "lucide-react";
+import { Coins, Clock, User } from "lucide-react";
+import { getCurrentUserId } from "@/lib/current-user";
+import { SubmissionCard } from "@/components/submission-card";
 import { ScoreForm } from "./score-form";
 import type { Quest, QuestAttempt } from "@/lib/types";
 
@@ -14,10 +15,11 @@ export default async function QuestDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const currentUserId = await getCurrentUserId();
 
   const { data: quest } = await supabase
     .from("quests")
-    .select("*")
+    .select("*, questgiver:profiles!questgiver_id(username, display_name)")
     .eq("id", id)
     .single();
 
@@ -25,14 +27,17 @@ export default async function QuestDetailPage({
 
   const { data: attempts } = await supabase
     .from("quest_attempts")
-    .select("*, party:parties(name, rank, architecture_type)")
+    .select("*, party:parties!left(name, rank, architecture_type)")
     .eq("quest_id", id)
     .order("started_at", { ascending: false });
 
-  const typedQuest = quest as Quest;
+  const typedQuest = quest as Quest & {
+    questgiver: { username: string; display_name: string | null } | null;
+  };
   const typedAttempts = (attempts ?? []) as (QuestAttempt & {
     party: { name: string; rank: string; architecture_type: string };
   })[];
+  const isQuestgiver = typedQuest.questgiver_id === currentUserId;
 
   const statusLabels: Record<string, string> = {
     open: "Open",
@@ -57,6 +62,10 @@ export default async function QuestDetailPage({
           </div>
         </div>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <User className="h-3.5 w-3.5 text-muted-foreground/60" />
+            {typedQuest.questgiver?.display_name || typedQuest.questgiver?.username || "Unknown"}
+          </span>
           <span className="flex items-center gap-1">
             <Coins className="h-3.5 w-3.5 text-gold-dim" />
             {typedQuest.gold_reward}g / {typedQuest.rp_reward} RP
@@ -103,70 +112,13 @@ export default async function QuestDetailPage({
             <div className="space-y-3">
               {typedAttempts
                 .sort((a, b) => (a.ranking ?? 999) - (b.ranking ?? 999))
-                .map((attempt) => {
-                const isWinner = attempt.status === "won";
-                return (
-                <div
-                  key={attempt.id}
-                  className={`rounded-sm border p-4 ${
-                    isWinner
-                      ? "border-gold/30 bg-gold/[0.02]"
-                      : "border-border/40"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      {isWinner && (
-                        <Trophy className="h-4 w-4 text-gold" />
-                      )}
-                      {attempt.ranking !== null && (
-                        <span className={`font-heading text-sm font-bold ${isWinner ? "text-gold" : "text-muted-foreground"}`}>
-                          #{attempt.ranking}
-                        </span>
-                      )}
-                      <span className="font-heading text-sm font-medium">
-                        {attempt.party?.name ?? "Unknown Party"}
-                      </span>
-                      <RankBadge rank={attempt.party?.rank ?? "Bronze"} />
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      {attempt.time_taken_seconds && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {attempt.time_taken_seconds}s
-                        </span>
-                      )}
-                      <span
-                        className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                          attempt.status === "won"
-                            ? "bg-green-400/10 text-green-400"
-                            : attempt.status === "lost"
-                            ? "bg-red-400/10 text-red-400"
-                            : attempt.status === "scored"
-                            ? "bg-gold/10 text-gold"
-                            : attempt.status === "in_progress"
-                            ? "bg-blue-400/10 text-blue-400 animate-pulse"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        {attempt.status === "in_progress" ? "working..." : attempt.status}
-                      </span>
-                    </div>
-                  </div>
-                  {attempt.questgiver_feedback && (
-                    <div className="text-xs text-muted-foreground/70 mb-2 flex items-center gap-1">
-                      <CheckCircle className="h-3 w-3 text-gold-dim" />
-                      <span className="font-semibold text-gold-dim">Oracle:</span> {attempt.questgiver_feedback}
-                    </div>
-                  )}
-                  {attempt.result_text && (
-                    <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4 leading-relaxed">
-                      {attempt.result_text}
-                    </p>
-                  )}
-                </div>
-              );
-              })}
+                .map((attempt) => (
+                  <SubmissionCard
+                    key={attempt.id}
+                    attempt={attempt}
+                    isQuestgiver={isQuestgiver}
+                  />
+                ))}
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">
@@ -176,9 +128,10 @@ export default async function QuestDetailPage({
         </div>
       </div>
 
-      {/* Scoring Form */}
-      {typedAttempts.some((a) => a.status === "submitted") &&
-        typedQuest.status !== "completed" && (
+      {/* Scoring Form — questgiver can close quest early by ranking scored/submitted attempts */}
+      {isQuestgiver &&
+        typedQuest.status !== "completed" &&
+        typedAttempts.some((a) => ["submitted", "scored"].includes(a.status)) && (
           <ScoreForm questId={typedQuest.id} attempts={typedAttempts} />
         )}
     </div>

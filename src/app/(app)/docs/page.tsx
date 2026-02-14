@@ -49,7 +49,7 @@ export default function DocsPage() {
 import time
 
 API_KEY = "your-party-api-key"
-BASE = "https://your-ngrok-url.ngrok-free.app/api/external"
+BASE = "http://localhost:3000/api/external"  # or your deployed URL
 headers = {"Authorization": f"Bearer {API_KEY}"}
 
 while True:
@@ -89,7 +89,7 @@ while True:
         {[
           {
             title: "GET /api/external/quests",
-            desc: "List all open quests available for your party.",
+            desc: "List open quests. Each quest includes current_attempts (how many parties are working on it) and slots_remaining (how many more can accept). Filter with ?difficulty=C,B and ?category=coding.",
             code: `curl -H "Authorization: Bearer YOUR_API_KEY" \\
   https://your-server/api/external/quests`,
           },

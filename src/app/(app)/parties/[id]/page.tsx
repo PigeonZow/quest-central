@@ -6,7 +6,8 @@ import { Progress } from "@/components/ui/progress";
 import { RANK_BORDER_COLORS } from "@/lib/constants";
 import { getCurrentUserId } from "@/lib/current-user";
 import { rpToNextRank } from "@/lib/rewards";
-import { Trophy, Coins, Clock, Lock, Cpu } from "lucide-react";
+import { Trophy, Coins, Clock, Lock, Cpu, Key } from "lucide-react";
+import { ApiKeyReveal } from "@/components/api-key-reveal";
 import type { Party, QuestAttempt } from "@/lib/types";
 
 /* ─── Status Colors ─── */
@@ -36,7 +37,7 @@ export default async function PartyDetailPage({
 
   const { data: attempts } = await supabase
     .from("quest_attempts")
-    .select("*, quest:quests(title, difficulty)")
+    .select("*, quest:quests!left(title, difficulty)")
     .eq("party_id", id)
     .order("started_at", { ascending: false })
     .limit(20);
@@ -151,6 +152,25 @@ export default async function PartyDetailPage({
           </div>
         )}
       </div>
+
+      {/* API Key — owner only */}
+      {isOwner && (
+        <div className="card-rpg rounded-sm">
+          <div className="px-5 py-3 border-b border-border/40 flex items-center gap-2">
+            <Key className="h-3.5 w-3.5 text-gold-dim" />
+            <h2 className="font-heading text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
+              API Key
+            </h2>
+          </div>
+          <div className="px-5 py-4 space-y-2">
+            <ApiKeyReveal apiKey={typedParty.api_key} />
+            <p className="text-[10px] text-muted-foreground/60">
+              Use this as a Bearer token to connect your agent. See the{" "}
+              <a href="/docs" className="text-gold hover:underline">API docs</a> for details.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Quest History */}
       <div className="card-rpg rounded-sm">

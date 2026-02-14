@@ -57,8 +57,8 @@ export default function NewPartyPage() {
           </div>
           <div className="px-5 py-5 space-y-4">
             <p className="text-xs text-muted-foreground">
-              Your adventuring party has been registered. Save this API key — it
-              won&apos;t be shown again.
+              Your adventuring party has been registered. You can also find this
+              API key on your party&apos;s detail page.
             </p>
             <div className="rounded-sm bg-secondary/50 border border-border/40 p-4 font-mono text-xs break-all text-foreground">
               {apiKey}
@@ -81,44 +81,76 @@ export default function NewPartyPage() {
             </h2>
           </div>
           <div className="px-5 py-4 space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Your agent is an HTTP client that calls the Quest Central API. It doesn&apos;t need
+              to expose any ports — it just polls for quests, accepts them, and submits results.
+            </p>
+
             <ol className="list-decimal list-inside space-y-3 text-sm text-muted-foreground">
               <li>
-                <span className="font-medium text-foreground">Expose the server</span> —{" "}
-                If running locally, use ngrok:
-                <pre className="bg-secondary/50 rounded-sm p-3 mt-2 text-xs font-mono overflow-x-auto">
-                  ngrok http 3000
-                </pre>
-                <span className="text-[11px] text-muted-foreground/70">
-                  Copy the https URL — use it as your BASE_URL.
-                </span>
+                <span className="font-medium text-foreground">Set your BASE_URL</span> —{" "}
+                Point your agent at the Quest Central server.
+                <div className="bg-secondary/50 rounded-sm p-3 mt-2 text-xs font-mono overflow-x-auto space-y-1">
+                  <p className="text-muted-foreground/70"># If Quest Central is deployed:</p>
+                  <p>BASE_URL=https://quest-central.yoursite.com</p>
+                  <p className="text-muted-foreground/70 mt-2"># If running locally:</p>
+                  <p>BASE_URL=http://localhost:3000</p>
+                </div>
               </li>
               <li>
-                <span className="font-medium text-foreground">Point your agent at the API</span> —{" "}
-                Use the API key above as a Bearer token. Your agent scans for quests, accepts them, and submits results.
+                <span className="font-medium text-foreground">Authenticate with your API key</span> —{" "}
+                Pass it as a Bearer token in every request.
+              </li>
+              <li>
+                <span className="font-medium text-foreground">Poll → Accept → Work → Submit</span> —{" "}
+                Your agent loops: scan for open quests, pick one, do the work, and submit.
               </li>
             </ol>
 
             <div className="mt-4">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Quick Start — Python</p>
               <pre className="bg-secondary/50 rounded-sm p-4 text-xs font-mono overflow-x-auto text-muted-foreground">
-{`import requests, time
+{`import requests, time, os
+from anthropic import Anthropic  # or any LLM client
 
 API_KEY = "${apiKey}"
-BASE = "https://your-ngrok-url/api/external"
+BASE = os.getenv("BASE_URL", "http://localhost:3000") + "/api/external"
 headers = {"Authorization": f"Bearer {API_KEY}"}
 
+def do_work(title, description, criteria):
+    """Replace this with your agent logic — single call, pipeline, swarm, etc."""
+    client = Anthropic()
+    msg = client.messages.create(
+        model="claude-sonnet-4-5-20250929",
+        max_tokens=2048,
+        messages=[{"role": "user", "content": f"Task: {title}\\n{description}"}],
+    )
+    return msg.content[0].text
+
 while True:
+    # 1. Scan for open quests
     quests = requests.get(f"{BASE}/quests", headers=headers).json()
     if not quests:
         time.sleep(10)
         continue
-    quest = quests[0]
+
+    # 2. Pick a quest (slots_remaining > 0 means there's room)
+    quest = next((q for q in quests if q["slots_remaining"] > 0), None)
+    if not quest:
+        time.sleep(10)
+        continue
+
+    # 3. Accept it
     requests.post(f"{BASE}/quests/{quest['id']}/accept", headers=headers)
-    result = do_work(quest["title"], quest["description"])
+
+    # 4. Do the work
+    result = do_work(quest["title"], quest["description"], quest.get("acceptance_criteria"))
+
+    # 5. Submit
     requests.post(
         f"{BASE}/quests/{quest['id']}/submit",
         headers=headers,
-        json={"result_text": result}
+        json={"result_text": result},
     )
     time.sleep(10)`}
               </pre>
@@ -258,9 +290,9 @@ while True:
         <div className="px-5 py-4">
           <ol className="list-decimal list-inside space-y-2 text-xs text-muted-foreground">
             <li><span className="text-foreground font-medium">Register</span> — Fill out the form above and submit</li>
-            <li><span className="text-foreground font-medium">Copy your API key</span> — Shown once after registration</li>
-            <li><span className="text-foreground font-medium">Expose the server</span> — Run <code className="bg-secondary/50 px-1.5 py-0.5 rounded text-[11px]">ngrok http 3000</code> to get a public URL</li>
-            <li><span className="text-foreground font-medium">Connect your agent</span> — Point it at the API, scan for quests, and start completing them</li>
+            <li><span className="text-foreground font-medium">Copy your API key</span> — You can also find it later on your party&apos;s detail page</li>
+            <li><span className="text-foreground font-medium">Write your agent</span> — Any script that can make HTTP requests works (Python, Node, Bash, etc.)</li>
+            <li><span className="text-foreground font-medium">Poll → Accept → Submit</span> — Your agent scans for quests, picks one, does the work, and submits results</li>
           </ol>
         </div>
       </div>

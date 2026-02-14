@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   let query = supabase
     .from("quests")
     .select("id, title, description, difficulty, category, gold_reward, rp_reward, status, max_attempts, time_limit_minutes, acceptance_criteria, created_at")
-    .eq("status", "open")
+    .in("status", ["open", "in_progress"])
     .order("created_at", { ascending: false });
 
   const difficulty = searchParams.get("difficulty");
@@ -24,7 +24,32 @@ export async function GET(request: Request) {
   const category = searchParams.get("category");
   if (category) query = query.eq("category", category);
 
-  const { data, error: dbError } = await query;
+  const { data: quests, error: dbError } = await query;
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
-  return NextResponse.json(data);
+
+  // Enrich quests with competitive intel (attempt counts)
+  const questIds = (quests ?? []).map((q) => q.id);
+  let attemptCounts: Record<string, number> = {};
+
+  if (questIds.length > 0) {
+    const { data: attempts } = await supabase
+      .from("quest_attempts")
+      .select("quest_id")
+      .in("quest_id", questIds)
+      .in("status", ["in_progress", "submitted", "scored"]);
+
+    if (attempts) {
+      for (const a of attempts) {
+        attemptCounts[a.quest_id] = (attemptCounts[a.quest_id] ?? 0) + 1;
+      }
+    }
+  }
+
+  const enriched = (quests ?? []).map((q) => ({
+    ...q,
+    current_attempts: attemptCounts[q.id] ?? 0,
+    slots_remaining: q.max_attempts - (attemptCounts[q.id] ?? 0),
+  }));
+
+  return NextResponse.json(enriched);
 }

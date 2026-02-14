@@ -21,10 +21,10 @@ export function PartyCard({ party }: { party: Party }) {
     <Link href={`/parties/${party.id}`}>
       <div className="quest-card rounded-sm p-4 cursor-pointer">
         <div className="flex items-start justify-between mb-1">
-          <div className="flex items-start gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <StatusDot status={party.status} />
-            <h3 className="font-heading text-sm font-semibold text-foreground leading-tight">{party.name}</h3>
-            <Lock className="h-3 w-3 text-muted-foreground/40 shrink-0 mt-0.5" />
+            <h3 className="font-heading text-sm font-semibold text-foreground leading-tight truncate">{party.name}</h3>
+            <Lock className="h-3 w-3 text-muted-foreground/40 shrink-0" />
           </div>
           <RankBadge rank={party.rank} />
         </div>

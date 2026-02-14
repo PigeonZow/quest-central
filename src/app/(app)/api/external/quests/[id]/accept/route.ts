@@ -30,6 +30,20 @@ export async function POST(
     );
   }
 
+  // Check if this party already attempted this quest
+  const { count: partyAttemptCount } = await supabase
+    .from("quest_attempts")
+    .select("*", { count: "exact", head: true })
+    .eq("quest_id", id)
+    .eq("party_id", party.id);
+
+  if ((partyAttemptCount ?? 0) > 0) {
+    return NextResponse.json(
+      { error: "Party has already attempted this quest" },
+      { status: 409 }
+    );
+  }
+
   // Check max attempts
   const { count } = await supabase
     .from("quest_attempts")

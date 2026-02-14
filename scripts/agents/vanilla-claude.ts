@@ -19,6 +19,20 @@ let API_KEY = process.env.API_KEY || "";
 
 const SCAN_INTERVAL = 8000; // 8s between scans
 
+interface QuestListing {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: string;
+  category: string;
+  gold_reward: number;
+  rp_reward: number;
+  max_attempts: number;
+  current_attempts: number;
+  slots_remaining: number;
+  acceptance_criteria: string | null;
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -74,6 +88,93 @@ async function callClaude(questTitle: string, questDescription: string, criteria
   return text;
 }
 
+/**
+ * Party Leader — evaluates available quests and picks the best one.
+ * Uses a lightweight LLM call to decide, falling back to simple difficulty sort.
+ */
+async function selectQuest(quests: QuestListing[]): Promise<QuestListing | null> {
+  if (quests.length === 0) return null;
+
+  // Filter out quests with no remaining slots
+  const available = quests.filter((q) => q.slots_remaining > 0);
+  if (available.length === 0) {
+    console.log("[Party Leader] All quests are full. Skipping.");
+    return null;
+  }
+
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+  if (!OPENAI_API_KEY) {
+    // Fallback: prefer easiest quest with open slots
+    const sorted = [...available].sort((a, b) => {
+      const order: Record<string, number> = { C: 0, B: 1, A: 2, S: 3 };
+      return (order[a.difficulty] ?? 4) - (order[b.difficulty] ?? 4);
+    });
+    console.log(`[Party Leader] (fallback) Picked easiest: "${sorted[0].title}"`);
+    return sorted[0];
+  }
+
+  const questSummaries = available.map((q, i) => (
+    `${i + 1}. "${q.title}" [${q.difficulty}-Rank, ${q.category}] — ${q.gold_reward}G/${q.rp_reward}RP — ${q.slots_remaining}/${q.max_attempts} slots open\n   ${q.description.slice(0, 150)}${q.description.length > 150 ? "..." : ""}`
+  )).join("\n");
+
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-4o",
+      max_tokens: 256,
+      messages: [
+        {
+          role: "system",
+          content: `You are the party leader for "Vanilla Claude", a fast single-call agent.
+Your party's strength: speed and simplicity. You make one direct LLM call per quest.
+You excel at: writing, research, general knowledge, creative tasks.
+You struggle with: multi-step coding tasks, tasks requiring tool use or iteration.
+
+Pick the ONE best quest for your party, or pick NONE if nothing is a good fit.
+Prefer quests where a single strong response wins. Avoid tasks that need iteration.
+Consider competition — fewer current attempts means less competition.
+
+Respond with ONLY a JSON object: {"pick": <number 1-N or null>, "reason": "<brief reason>"}`,
+        },
+        { role: "user", content: `Available quests:\n${questSummaries}` },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    console.log("[Party Leader] LLM call failed, using fallback.");
+    return available[0];
+  }
+
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content ?? "";
+
+  try {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const decision = JSON.parse(match[0]);
+      if (decision.pick === null) {
+        console.log(`[Party Leader] Decided to skip. Reason: ${decision.reason}`);
+        return null;
+      }
+      const idx = decision.pick - 1;
+      if (idx >= 0 && idx < available.length) {
+        console.log(`[Party Leader] Picked "${available[idx].title}". Reason: ${decision.reason}`);
+        return available[idx];
+      }
+    }
+  } catch {
+    // Parse failed, fall through
+  }
+
+  console.log("[Party Leader] Couldn't parse decision, picking first available.");
+  return available[0];
+}
+
 async function run() {
   console.log("Vanilla Claude Agent");
   console.log(`Base URL: ${BASE_URL}`);
@@ -99,7 +200,7 @@ async function run() {
       // Scan
       console.log("[Vanilla Claude] Scanning for quests...");
       const questsRes = await fetch(`${BASE_URL}/api/external/quests`, { headers });
-      const quests = await questsRes.json();
+      const quests: QuestListing[] = await questsRes.json();
 
       if (!Array.isArray(quests) || quests.length === 0) {
         console.log("[Vanilla Claude] No open quests. Waiting...");
@@ -107,12 +208,13 @@ async function run() {
         continue;
       }
 
-      // Pick easiest available quest (prefers C, then B, then anything)
-      const sorted = [...quests].sort((a, b) => {
-        const order: Record<string, number> = { C: 0, B: 1, A: 2, S: 3 };
-        return (order[a.difficulty] ?? 4) - (order[b.difficulty] ?? 4);
-      });
-      const quest = sorted[0];
+      // Party Leader selects a quest
+      const quest = await selectQuest(quests);
+      if (!quest) {
+        console.log("[Vanilla Claude] Party leader passed on all quests. Waiting...");
+        await sleep(SCAN_INTERVAL);
+        continue;
+      }
 
       console.log(`[Vanilla Claude] Accepting: "${quest.title}" (${quest.difficulty}-Rank)`);
 
