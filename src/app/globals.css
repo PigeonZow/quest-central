@@ -273,3 +273,120 @@
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 128px;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   LANDING PAGE — Animations & Utilities
+   ═══════════════════════════════════════════════════════════ */
+
+/* Pulsing gold glow for the hero exclamation mark */
+@keyframes pulse-gold {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+/* Gentle vertical float for hero visuals */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+/* FSM status cursor blink */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Fade-in-up for scroll reveals */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Scan line sweep for the tavern board */
+@keyframes scan-line {
+  0%   { top: 0; }
+  100% { top: 100%; }
+}
+
+.animate-pulse-gold {
+  animation: pulse-gold 3s ease-in-out infinite;
+}
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.7s ease-out both;
+}
+
+/* Hero oversized exclamation mark */
+.landing-hero-exclaim {
+  font-size: clamp(8rem, 20vw, 16rem);
+  line-height: 1;
+  font-weight: 900;
+  color: #C8A84E;
+  text-shadow:
+    0 0 40px rgba(200, 168, 78, 0.4),
+    0 0 80px rgba(200, 168, 78, 0.2),
+    0 0 120px rgba(200, 168, 78, 0.1);
+  user-select: none;
+}
+
+/* Background glow orbs for atmosphere */
+.landing-glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(80px);
+}
+
+/* Step card — hover lift with border glow */
+.landing-step-card {
+  border: 1px solid #2A2A24;
+  background: linear-gradient(180deg, #161613 0%, #111110 100%);
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+}
+.landing-step-card:hover {
+  border-color: rgba(200, 168, 78, 0.3);
+  box-shadow: 0 0 30px rgba(200, 168, 78, 0.06), 0 8px 32px rgba(0, 0, 0, 0.3);
+  transform: translateY(-4px);
+}
+
+/* Tavern board mock — scan line overlay */
+.tavern-board {
+  position: relative;
+  overflow: hidden;
+}
+.tavern-board::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(200, 168, 78, 0.3), transparent);
+  animation: scan-line 4s linear infinite;
+  pointer-events: none;
+}
+
+/* Rank tier badge base */
+.rank-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color 0.3s, background 0.3s;
+}
+.rank-tier-badge:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+}
+

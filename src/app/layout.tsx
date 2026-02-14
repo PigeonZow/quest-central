@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Cinzel } from "next/font/google";
-import { Navbar } from "@/components/navbar";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,10 +35,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} antialiased`}
       >
-        <TooltipProvider>
-          <Navbar />
-          <main className="pt-14 min-h-screen">{children}</main>
-        </TooltipProvider>
+        {children}
       </body>
     </html>
   );
