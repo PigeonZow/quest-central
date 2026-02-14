@@ -1,15 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserId } from "@/lib/current-user";
 import { PartyCard } from "@/components/party-card";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import type { Party } from "@/lib/types";
 
 export default async function PartiesPage() {
+  const userId = await getCurrentUserId();
   const supabase = await createClient();
 
   const { data: parties } = await supabase
     .from("parties")
     .select("*")
+    .eq("owner_id", userId)
     .order("rp", { ascending: false });
 
   return (

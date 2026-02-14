@@ -3,11 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserId } from "@/lib/current-user";
 
 export async function GET() {
+  const userId = await getCurrentUserId();
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("parties")
     .select("*")
+    .eq("owner_id", userId)
     .order("rp", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
