@@ -140,6 +140,7 @@
 /* Banner button — pointed ends like a medieval nameplate */
 .btn-banner {
   position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
