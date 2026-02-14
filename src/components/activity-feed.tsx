@@ -132,17 +132,15 @@ export function ActivityFeed({ limit = 15 }: { limit?: number }) {
       {activities.map((entry) => (
         <div
           key={entry.id}
-          className={`flex items-center justify-between text-sm border-b border-border pb-2 last:border-0 transition-all duration-500 ${
-            newIds.has(entry.id)
-              ? "bg-gold/10 -mx-2 px-2 rounded"
-              : ""
-          }`}
+          className="glow-row flex items-center justify-between text-xs py-2 border-b border-border/40 last:border-0 transition-all duration-500"
         >
           <span className="flex items-center gap-2">
-            <span className="text-xs">{EVENT_ICONS[entry.event_type] ?? "📌"}</span>
-            <span>{formatMessage(entry)}</span>
+            <span className="text-[10px]">{EVENT_ICONS[entry.event_type] ?? "📌"}</span>
+            <span className={`glow-text-wide text-muted-foreground ${newIds.has(entry.id) ? "glow-on" : ""}`}>
+              {formatMessage(entry)}
+            </span>
           </span>
-          <span className="text-xs text-muted-foreground shrink-0 ml-4">
+          <span className="text-[10px] text-muted-foreground/50 shrink-0 ml-4">
             {getTimeAgo(entry.created_at)}
           </span>
         </div>

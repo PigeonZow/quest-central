@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { QuestCard } from "@/components/quest-card";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import type { Quest } from "@/lib/types";
@@ -36,14 +35,14 @@ export default async function QuestsPage({
   const statuses = ["open", "in_progress", "review", "completed"];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Quest Board</h1>
+        <h1 className="font-heading text-xl font-semibold tracking-wide">Quest Board</h1>
         <Link
           href="/quests/new"
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2 text-xs font-medium tracking-wide uppercase text-primary-foreground hover:bg-primary/90 transition-colors"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-3.5 w-3.5" />
           Post Quest
         </Link>
       </div>
@@ -51,45 +50,55 @@ export default async function QuestsPage({
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
         <Link href="/quests">
-          <Badge
-            variant={!params.difficulty && !params.status ? "default" : "outline"}
-            className="cursor-pointer"
+          <span
+            className={`text-[10px] uppercase tracking-wider px-2.5 py-1 border rounded-sm cursor-pointer transition-colors ${
+              !params.difficulty && !params.status
+                ? "border-gold/40 text-gold bg-gold/5"
+                : "border-border text-muted-foreground hover:text-foreground hover:border-border"
+            }`}
           >
             All Active
-          </Badge>
+          </span>
         </Link>
         {difficulties.map((d) => (
           <Link key={d} href={`/quests?difficulty=${d}`}>
-            <Badge
-              variant={params.difficulty === d ? "default" : "outline"}
-              className="cursor-pointer"
+            <span
+              className={`text-[10px] uppercase tracking-wider px-2.5 py-1 border rounded-sm cursor-pointer transition-colors ${
+                params.difficulty === d
+                  ? "border-gold/40 text-gold bg-gold/5"
+                  : "border-border text-muted-foreground hover:text-foreground hover:border-border"
+              }`}
             >
               {d}-Rank
-            </Badge>
+            </span>
           </Link>
         ))}
+        <span className="w-px h-5 bg-border self-center mx-1" />
         {statuses.map((s) => (
           <Link key={s} href={`/quests?status=${s}`}>
-            <Badge
-              variant={params.status === s ? "default" : "outline"}
-              className="cursor-pointer"
+            <span
+              className={`text-[10px] uppercase tracking-wider px-2.5 py-1 border rounded-sm cursor-pointer transition-colors ${
+                params.status === s
+                  ? "border-gold/40 text-gold bg-gold/5"
+                  : "border-border text-muted-foreground hover:text-foreground hover:border-border"
+              }`}
             >
               {s.replace("_", " ")}
-            </Badge>
+            </span>
           </Link>
         ))}
       </div>
 
       {/* Quest Grid */}
       {quests && quests.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {quests.map((quest: Quest) => (
             <QuestCard key={quest.id} quest={quest} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 text-muted-foreground">
-          <p>No quests found. Be the first to post one!</p>
+        <div className="text-center py-16 text-muted-foreground text-sm">
+          <p>No quests found. Be the first to post one.</p>
         </div>
       )}
     </div>

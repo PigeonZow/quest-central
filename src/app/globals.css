@@ -9,6 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-cinzel);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -47,54 +48,51 @@
   --radius-4xl: calc(var(--radius) + 16px);
 
   /* RPG custom colors */
-  --color-gold: #FFD700;
-  --color-gold-dim: #B8960F;
+  --color-gold: #C8A84E;
+  --color-gold-bright: #E8C65A;
+  --color-gold-dim: #96793A;
   --color-parchment: #f4e4bc;
   --color-rank-bronze: #CD7F32;
   --color-rank-silver: #C0C0C0;
-  --color-rank-gold: #FFD700;
+  --color-rank-gold: #C8A84E;
   --color-rank-platinum: #E5E4E2;
   --color-rank-adamantite: #7B2FBE;
-  --color-difficulty-c: #22C55E;
-  --color-difficulty-b: #3B82F6;
-  --color-difficulty-a: #F97316;
-  --color-difficulty-s: #EF4444;
 }
 
-/* We use dark mode only for this app */
+/* Dark fantasy theme */
 :root {
-  --radius: 0.625rem;
-  --background: #0f0f23;
-  --foreground: #e2e8f0;
-  --card: #1a1a2e;
-  --card-foreground: #e2e8f0;
-  --popover: #1a1a2e;
-  --popover-foreground: #e2e8f0;
-  --primary: #FFD700;
-  --primary-foreground: #0f0f23;
-  --secondary: #16213e;
-  --secondary-foreground: #e2e8f0;
-  --muted: #16213e;
-  --muted-foreground: #94a3b8;
-  --accent: #1e293b;
-  --accent-foreground: #e2e8f0;
-  --destructive: #dc2626;
-  --border: #1e293b;
-  --input: #1e293b;
-  --ring: #FFD700;
-  --chart-1: #FFD700;
-  --chart-2: #22C55E;
-  --chart-3: #3B82F6;
-  --chart-4: #F97316;
-  --chart-5: #7B2FBE;
-  --sidebar: #0a0a1a;
-  --sidebar-foreground: #e2e8f0;
-  --sidebar-primary: #FFD700;
-  --sidebar-primary-foreground: #0f0f23;
-  --sidebar-accent: #16213e;
-  --sidebar-accent-foreground: #e2e8f0;
-  --sidebar-border: #1e293b;
-  --sidebar-ring: #FFD700;
+  --radius: 0.25rem;
+  --background: #0D0D0D;
+  --foreground: #C4B998;
+  --card: #151515;
+  --card-foreground: #C4B998;
+  --popover: #151515;
+  --popover-foreground: #C4B998;
+  --primary: #C8A84E;
+  --primary-foreground: #0D0D0D;
+  --secondary: #1A1A17;
+  --secondary-foreground: #C4B998;
+  --muted: #1A1A17;
+  --muted-foreground: #7A7462;
+  --accent: #1E1E1A;
+  --accent-foreground: #C4B998;
+  --destructive: #8B2020;
+  --border: #2A2A24;
+  --input: #2A2A24;
+  --ring: #C8A84E;
+  --chart-1: #C8A84E;
+  --chart-2: #6B8E5A;
+  --chart-3: #5A7B8E;
+  --chart-4: #8E6B5A;
+  --chart-5: #7B5A8E;
+  --sidebar: #0A0A0A;
+  --sidebar-foreground: #C4B998;
+  --sidebar-primary: #C8A84E;
+  --sidebar-primary-foreground: #0D0D0D;
+  --sidebar-accent: #1A1A17;
+  --sidebar-accent-foreground: #C4B998;
+  --sidebar-border: #2A2A24;
+  --sidebar-ring: #C8A84E;
 }
 
 @layer base {
@@ -104,4 +102,123 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Fantasy heading utility */
+.font-heading {
+  font-family: var(--font-cinzel), serif;
+  letter-spacing: 0.04em;
+}
+
+/* Ornamental divider */
+.divider-ornament {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #7A7462;
+}
+.divider-ornament::before,
+.divider-ornament::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #2A2A24 30%, #3A3A30 50%, #2A2A24 70%, transparent);
+}
+
+/* Parchment-style inner glow for cards */
+.card-rpg {
+  border: 1px solid #2A2A24;
+  background: linear-gradient(180deg, #161613 0%, #131310 100%);
+  box-shadow: inset 0 1px 0 0 rgba(200, 168, 78, 0.03);
+  overflow: visible;
+}
+.card-rpg:hover {
+  border-color: #3A3A30;
+  box-shadow: inset 0 1px 0 0 rgba(200, 168, 78, 0.06), 0 0 20px rgba(200, 168, 78, 0.03);
+}
+
+/* Quest board card */
+.quest-card {
+  border: 1px solid #2A2A24;
+  background: #141412;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.quest-card:hover {
+  border-color: rgba(200, 168, 78, 0.25);
+  box-shadow: 0 0 16px rgba(200, 168, 78, 0.04);
+}
+
+/* RPG golden glow — Elden Ring menu style. Apply to an inline/text element. */
+.glow-text {
+  position: relative;
+}
+/* Wider glow base for row items (activity log, leaderboard, etc.) */
+.glow-text-wide {
+  position: relative;
+  padding: 0 1em;
+  margin: 0 -1em;
+}
+.glow-text::before,
+.glow-text-wide::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: 200%;
+  height: 220%;
+  background: radial-gradient(ellipse 45% 40% at center, rgba(210, 175, 65, 0.5) 0%, rgba(200, 168, 78, 0.22) 30%, rgba(200, 168, 78, 0.04) 55%, transparent 65%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+/* Rows with glow children must not clip the pseudo-element */
+.glow-row {
+  overflow: visible;
+}
+
+/* Hover trigger: put .glow-row on the row, glow appears on .glow-text inside */
+.glow-row:hover .glow-text::before,
+.glow-row:hover .glow-text-wide::before {
+  opacity: 1;
+}
+.glow-row:hover .glow-text,
+.glow-row:hover .glow-text-wide {
+  color: #E8D5A3;
+}
+
+/* Self-hover: element triggers its own glow (navbar links) */
+.glow-self:hover::before {
+  opacity: 1;
+}
+.glow-self:hover {
+  color: #E8D5A3;
+}
+
+/* Active/always-on glow (nav active, new feed entries) */
+.glow-on::before {
+  opacity: 1;
+}
+.glow-on {
+  color: #E8D5A3;
+}
+
+/* Nav: hovering the group suppresses active glow, only hovered item glows */
+.nav-glow:hover .glow-on:not(:hover)::before {
+  opacity: 0;
+}
+.nav-glow:hover .glow-on:not(:hover) {
+  color: inherit;
+}
+
+/* Subtle noise texture overlay */
+.texture-noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.015;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px;
 }

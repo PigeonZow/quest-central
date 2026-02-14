@@ -24,32 +24,32 @@ export function Navbar() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border bg-sidebar">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-14 border-b border-border/60 bg-[#0A0A0A]/95 backdrop-blur-sm">
       <div className="flex h-full items-center px-6">
         {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-2 mr-8">
-          <span className="text-3xl font-bold text-gold leading-none">!</span>
-          <span className="text-lg font-bold text-foreground">
+        <Link href="/dashboard" className="flex items-center gap-2.5 mr-10">
+          <span className="text-2xl font-bold text-gold leading-none">!</span>
+          <span className="font-heading text-sm font-semibold tracking-wider text-foreground uppercase">
             Quest Central
           </span>
         </Link>
 
         {/* Nav Links */}
-        <div className="flex items-center gap-1">
+        <div className="nav-glow flex items-center gap-0.5">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                className={`glow-text glow-self flex items-center gap-2 px-3 py-1.5 text-xs font-medium tracking-wide uppercase transition-colors ${
                   isActive
-                    ? "bg-accent text-gold"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                    ? "text-gold glow-on"
+                    : "text-muted-foreground"
                 }`}
               >
-                <item.icon className="h-4 w-4" />
-                {item.label}
+                <item.icon className="h-3.5 w-3.5 relative" />
+                <span className="relative">{item.label}</span>
               </Link>
             );
           })}

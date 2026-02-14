@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -61,23 +60,28 @@ export default function NewQuestPage() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
-      <Card>
-        <CardHeader>
-          <CardTitle>Post a New Quest</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="card-rpg rounded-sm">
+        <div className="px-5 py-3 border-b border-border/40">
+          <h1 className="font-heading text-sm font-semibold tracking-wider uppercase">
+            Post a New Quest
+          </h1>
+        </div>
+        <div className="px-5 py-5">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">Title</label>
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
+                Title
+              </label>
               <Input
                 name="title"
                 placeholder="Fix the authentication bug..."
                 required
+                className="rounded-sm"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-1 block">
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
                 Description
               </label>
               <Textarea
@@ -85,12 +89,13 @@ export default function NewQuestPage() {
                 placeholder="Describe the task in detail..."
                 rows={4}
                 required
+                className="rounded-sm"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium mb-1 block">
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
                   Difficulty
                 </label>
                 <Select
@@ -98,7 +103,7 @@ export default function NewQuestPage() {
                   value={difficulty}
                   onValueChange={setDifficulty}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -111,11 +116,11 @@ export default function NewQuestPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-1 block">
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
                   Category
                 </label>
                 <Select name="category" defaultValue="general">
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -130,19 +135,20 @@ export default function NewQuestPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-1 block">
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
                 Acceptance Criteria (optional)
               </label>
               <Textarea
                 name="acceptance_criteria"
                 placeholder="What does a successful completion look like?"
                 rows={2}
+                className="rounded-sm"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium mb-1 block">
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
                   Max Attempts
                 </label>
                 <Input
@@ -151,39 +157,39 @@ export default function NewQuestPage() {
                   defaultValue={5}
                   min={1}
                   max={20}
+                  className="rounded-sm"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">
-                  Time Limit (minutes, optional)
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
+                  Time Limit (min, optional)
                 </label>
                 <Input
                   name="time_limit_minutes"
                   type="number"
                   placeholder="No limit"
                   min={1}
+                  className="rounded-sm"
                 />
               </div>
             </div>
 
             {/* Reward preview */}
-            <div className="rounded-md bg-secondary p-3 text-sm">
+            <div className="rounded-sm bg-secondary/50 border border-border/40 p-3 text-xs">
               <span className="text-gold font-medium">
-                {rewards.gold} gold
+                {rewards.gold}g
               </span>{" "}
-              +{" "}
               <span className="text-muted-foreground">
-                {rewards.rp} RP
-              </span>{" "}
-              reward (based on difficulty)
+                + {rewards.rp} RP reward
+              </span>
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full">
+            <Button type="submit" disabled={loading} className="w-full rounded-sm text-xs uppercase tracking-wider">
               {loading ? "Posting..." : "Post Quest"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

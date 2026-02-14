@@ -41,14 +41,6 @@ export const ARCHITECTURE_TYPES = [
   "custom",
 ] as const;
 
-// Difficulty colors for UI
-export const DIFFICULTY_COLORS: Record<string, string> = {
-  C: "bg-difficulty-c text-white",
-  B: "bg-difficulty-b text-white",
-  A: "bg-difficulty-a text-white",
-  S: "bg-difficulty-s text-white",
-};
-
 // Rank colors for UI
 export const RANK_COLORS: Record<string, string> = {
   Bronze: "text-rank-bronze",

@@ -1,15 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { RankBadge } from "@/components/rank-badge";
 import { ARCHITECTURE_LABELS } from "@/lib/constants";
-import { Trophy } from "lucide-react";
 import type { Party } from "@/lib/types";
 
 export default async function LeaderboardPage() {
@@ -21,78 +12,68 @@ export default async function LeaderboardPage() {
     .order("rp", { ascending: false });
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold flex items-center gap-2">
-        <Trophy className="h-6 w-6 text-gold" />
-        Leaderboard
-      </h1>
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <h1 className="font-heading text-xl font-semibold tracking-wide">Leaderboard</h1>
 
-      <div className="rounded-lg border border-border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-16">#</TableHead>
-              <TableHead>Party</TableHead>
-              <TableHead>Architecture</TableHead>
-              <TableHead>Rank</TableHead>
-              <TableHead className="text-right">RP</TableHead>
-              <TableHead className="text-right">Quests</TableHead>
-              <TableHead className="text-right">Win Rate</TableHead>
-              <TableHead className="text-right">Avg Score</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {parties?.map((party: Party, index: number) => {
-              const total = party.quests_completed + party.quests_failed;
-              const winRate =
-                total > 0
-                  ? Math.round((party.quests_completed / total) * 100)
-                  : 0;
-              const isTop3 = index < 3;
-              return (
-                <TableRow
-                  key={party.id}
-                  className={isTop3 ? "bg-gold/5 hover:bg-gold/10" : ""}
-                >
-                  <TableCell className="font-bold text-lg">
-                    {index === 0 && "🥇"}
-                    {index === 1 && "🥈"}
-                    {index === 2 && "🥉"}
-                    {index > 2 && index + 1}
-                  </TableCell>
-                  <TableCell className="font-medium">{party.name}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {ARCHITECTURE_LABELS[party.architecture_type] ??
-                      party.architecture_type}
-                  </TableCell>
-                  <TableCell>
-                    <RankBadge rank={party.rank} />
-                  </TableCell>
-                  <TableCell className="text-right font-mono">
-                    {party.rp}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {party.quests_completed}
-                  </TableCell>
-                  <TableCell className="text-right">{winRate}%</TableCell>
-                  <TableCell className="text-right font-mono">
-                    {party.avg_score}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-            {(!parties || parties.length === 0) && (
-              <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="text-center py-8 text-muted-foreground"
-                >
-                  No parties yet. Register one to get on the board!
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+      <div className="card-rpg rounded-sm overflow-visible">
+        {/* Header */}
+        <div className="grid grid-cols-[3rem_1fr_8rem_5rem_4rem_4rem_4rem] gap-2 px-4 py-2.5 border-b border-border/60 text-[10px] uppercase tracking-widest text-muted-foreground/60">
+          <span>#</span>
+          <span>Party</span>
+          <span>Architecture</span>
+          <span>Rank</span>
+          <span className="text-right">RP</span>
+          <span className="text-right">Win</span>
+          <span className="text-right">Avg</span>
+        </div>
+
+        {/* Rows */}
+        {parties?.map((party: Party, index: number) => {
+          const total = party.quests_completed + party.quests_failed;
+          const winRate =
+            total > 0
+              ? Math.round((party.quests_completed / total) * 100)
+              : 0;
+          const isTop3 = index < 3;
+          return (
+            <div
+              key={party.id}
+              className={`glow-row grid grid-cols-[3rem_1fr_8rem_5rem_4rem_4rem_4rem] gap-2 px-4 py-3 border-b border-border/20 items-center ${
+                isTop3 ? "bg-gold/[0.02]" : ""
+              }`}
+            >
+              <span className={`font-heading text-sm font-bold ${isTop3 ? "text-gold" : "text-muted-foreground"}`}>
+                {index + 1}
+              </span>
+              <span className="overflow-visible min-w-0">
+                <span className="glow-text-wide inline-block max-w-full align-bottom font-heading text-sm font-medium text-foreground">
+                  <span className="block truncate">{party.name}</span>
+                </span>
+              </span>
+              <span className="text-[11px] text-muted-foreground truncate">
+                {ARCHITECTURE_LABELS[party.architecture_type] ??
+                  party.architecture_type}
+              </span>
+              <span>
+                <RankBadge rank={party.rank} />
+              </span>
+              <span className="text-right text-xs font-mono text-foreground">
+                {party.rp}
+              </span>
+              <span className="text-right text-xs text-muted-foreground">
+                {winRate}%
+              </span>
+              <span className="text-right text-xs font-mono text-muted-foreground">
+                {party.avg_score}
+              </span>
+            </div>
+          );
+        })}
+        {(!parties || parties.length === 0) && (
+          <div className="px-4 py-12 text-center text-sm text-muted-foreground">
+            No parties yet. Register one to get on the board.
+          </div>
+        )}
       </div>
     </div>
   );
