@@ -9,6 +9,16 @@ const supabase = createClient(
 );
 
 const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001";
+const DEMO_USER_2_ID = "00000000-0000-0000-0000-000000000002";
+
+// Party ownership: first 3 belong to User 1, last 2 to User 2
+const PARTY_OWNERS = [
+  DEMO_USER_ID,   // Vanilla Claude
+  DEMO_USER_ID,   // Claude Agent SDK Party
+  DEMO_USER_ID,   // CrewAI Collective
+  DEMO_USER_2_ID, // LangGraph Legends
+  DEMO_USER_2_ID, // The Giga Swarm
+];
 
 // ============================================
 // PARTIES
@@ -211,16 +221,24 @@ async function seed() {
   await supabase.from("quests").delete().neq("id", "00000000-0000-0000-0000-000000000000");
   await supabase.from("parties").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
+  // Ensure both demo users exist
+  await supabase.from("profiles").upsert([
+    { id: DEMO_USER_ID, username: "questmaster69", display_name: "questmaster69" },
+    { id: DEMO_USER_2_ID, username: "agentmaxxer420", display_name: "agentmaxxer420" },
+  ]);
+
   // Insert parties
   console.log("Creating parties...");
   const partyIds: string[] = [];
   const partyApiKeys: string[] = [];
 
-  for (const p of parties) {
+  for (let i = 0; i < parties.length; i++) {
+    const p = parties[i];
+    const ownerId = PARTY_OWNERS[i] ?? DEMO_USER_ID;
     const { data, error } = await supabase
       .from("parties")
       .insert({
-        owner_id: DEMO_USER_ID,
+        owner_id: ownerId,
         name: p.name,
         description: p.description,
         architecture_type: p.architecture_type,
@@ -260,11 +278,13 @@ async function seed() {
     const q = completedQuests[qi];
     const rewards = DIFFICULTY_REWARDS[q.difficulty];
     const daysAgo = completedQuests.length - qi; // older quests first
+    // ~70% User 1, ~30% User 2
+    const questOwner = qi % 3 === 2 ? DEMO_USER_2_ID : DEMO_USER_ID;
 
     const { data: quest, error } = await supabase
       .from("quests")
       .insert({
-        questgiver_id: DEMO_USER_ID,
+        questgiver_id: questOwner,
         title: q.title,
         description: `Complete the following task: ${q.title}. This is a ${q.difficulty}-rank ${q.category} quest.`,
         difficulty: q.difficulty,
@@ -367,12 +387,14 @@ async function seed() {
 
   // Insert open quests
   console.log("\nCreating open quests...");
-  for (const q of openQuests) {
+  for (let oqi = 0; oqi < openQuests.length; oqi++) {
+    const q = openQuests[oqi];
     const rewards = DIFFICULTY_REWARDS[q.difficulty];
+    const openQuestOwner = oqi % 3 === 2 ? DEMO_USER_2_ID : DEMO_USER_ID;
     const { data: quest, error } = await supabase
       .from("quests")
       .insert({
-        questgiver_id: DEMO_USER_ID,
+        questgiver_id: openQuestOwner,
         title: q.title,
         description: q.description,
         difficulty: q.difficulty,
@@ -425,6 +447,18 @@ async function seed() {
   console.log(`\nInserting ${activityEntries.length} activity log entries...`);
   const { error: actError } = await supabase.from("activity_log").insert(activityEntries);
   if (actError) console.error("Activity log error:", actError.message);
+
+  // Update user gold based on their parties' earnings
+  const user1Gold = parties
+    .filter((_, i) => PARTY_OWNERS[i] === DEMO_USER_ID)
+    .reduce((sum, p) => sum + p.gold_earned, 0);
+  const user2Gold = parties
+    .filter((_, i) => PARTY_OWNERS[i] === DEMO_USER_2_ID)
+    .reduce((sum, p) => sum + p.gold_earned, 0);
+
+  await supabase.from("profiles").update({ gold: user1Gold }).eq("id", DEMO_USER_ID);
+  await supabase.from("profiles").update({ gold: user2Gold }).eq("id", DEMO_USER_2_ID);
+  console.log(`\nUpdated gold — User 1: ${user1Gold}g, User 2: ${user2Gold}g`);
 
   // Print summary
   console.log("\n========================================");

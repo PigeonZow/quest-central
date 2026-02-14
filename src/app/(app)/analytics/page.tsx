@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ARCHITECTURE_LABELS } from "@/lib/constants";
 import {
   BarChart,
   Bar,
@@ -23,6 +22,11 @@ interface AnalyticsEntry {
   avg_time: number;
   count: number;
   win_rate: number;
+}
+
+// Format architecture_type for display (e.g. "single_call" → "Single Call")
+function formatArch(type: string): string {
+  return type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 const ARCH_COLORS: Record<string, string> = {
@@ -105,7 +109,7 @@ export default function AnalyticsPage() {
     const totalWins = entries.reduce((s, e) => s + e.win_rate * e.count, 0);
     const totalCount = entries.reduce((s, e) => s + e.count, 0);
     return {
-      name: ARCHITECTURE_LABELS[arch] ?? arch,
+      name: formatArch(arch),
       architecture_type: arch,
       win_rate: totalCount > 0 ? Math.round(totalWins / totalCount) : 0,
     };
@@ -114,7 +118,7 @@ export default function AnalyticsPage() {
   const scatterData = data.map((d) => ({
     x: d.avg_time,
     y: d.avg_score,
-    name: `${ARCHITECTURE_LABELS[d.architecture_type] ?? d.architecture_type} (${d.difficulty})`,
+    name: `${formatArch(d.architecture_type)} (${d.difficulty})`,
     arch: d.architecture_type,
     difficulty: d.difficulty,
   }));
@@ -139,7 +143,7 @@ export default function AnalyticsPage() {
               <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: "#C4B998" }} />
               <Legend
                 formatter={(value: string) =>
-                  ARCHITECTURE_LABELS[value] ?? value
+                  formatArch(value)
                 }
               />
               {architectures.map((arch) => (
@@ -172,7 +176,7 @@ export default function AnalyticsPage() {
                 <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: "#C4B998" }} />
                 <Legend
                   formatter={(value: string) =>
-                    ARCHITECTURE_LABELS[value] ?? value
+                    formatArch(value)
                   }
                 />
                 {architectures.map((arch) => (
@@ -256,7 +260,7 @@ export default function AnalyticsPage() {
               {architectures.map((arch) => (
                 <Scatter
                   key={arch}
-                  name={ARCHITECTURE_LABELS[arch] ?? arch}
+                  name={formatArch(arch)}
                   data={scatterData.filter((d) => d.arch === arch)}
                   fill={ARCH_COLORS[arch] ?? "#666"}
                 />

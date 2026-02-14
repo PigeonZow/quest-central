@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { DEMO_USER_ID } from "@/lib/constants";
+import { getCurrentUserId } from "@/lib/current-user";
 
 export async function GET() {
   const supabase = await createClient();
@@ -15,18 +15,19 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const userId = await getCurrentUserId();
   const supabase = await createClient();
   const body = await request.json();
 
   const { data, error } = await supabase
     .from("parties")
     .insert({
-      owner_id: DEMO_USER_ID,
+      owner_id: userId,
       name: body.name,
       description: body.description || null,
-      architecture_type: body.architecture_type,
+      architecture_type: body.architecture_type || "custom",
       architecture_detail: body.architecture_detail || {},
-      is_public: body.is_public ?? true,
+      is_public: body.is_public ?? false,
     })
     .select()
     .single();

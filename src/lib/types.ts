@@ -13,7 +13,7 @@ export interface Party {
   owner_id: string;
   name: string;
   description: string | null;
-  architecture_type: string;
+  architecture_type?: string | null;
   architecture_detail: Record<string, unknown>;
   api_key: string;
   status: "idle" | "scanning" | "active" | "resting";

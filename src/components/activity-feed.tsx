@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 interface ActivityEntry {
   id: string;
@@ -36,6 +37,16 @@ function formatMessage(entry: ActivityEntry): string {
   }
 }
 
+function getEntryHref(entry: ActivityEntry): string | null {
+  if (entry.event_type === "rank_up" && entry.party_id) {
+    return `/parties/${entry.party_id}`;
+  }
+  if (entry.quest_id) {
+    return `/quests/${entry.quest_id}`;
+  }
+  return null;
+}
+
 function getTimeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
   if (seconds < 60) return "just now";
@@ -55,22 +66,64 @@ const EVENT_ICONS: Record<string, string> = {
   rank_up: "🎖️",
 };
 
-export function ActivityFeed({ limit = 15 }: { limit?: number }) {
+export function ActivityFeed({ limit = 15, userId }: { limit?: number; userId?: string }) {
   const [activities, setActivities] = useState<ActivityEntry[]>([]);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const [userPartyIds, setUserPartyIds] = useState<Set<string>>(new Set());
+  const [userQuestIds, setUserQuestIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const supabase = createClient();
 
-    // Load initial
-    supabase
-      .from("activity_log")
-      .select("*, party:parties(name), quest:quests(title)")
-      .order("created_at", { ascending: false })
-      .limit(limit)
-      .then(({ data }) => {
-        if (data) setActivities(data as ActivityEntry[]);
-      });
+    async function load() {
+      // If userId provided, fetch their party IDs and quest IDs for filtering
+      let partyIds = new Set<string>();
+      let questIds = new Set<string>();
+
+      if (userId) {
+        const { data: userParties } = await supabase
+          .from("parties")
+          .select("id")
+          .eq("owner_id", userId);
+        if (userParties) {
+          partyIds = new Set(userParties.map((p) => p.id));
+        }
+
+        const { data: userQuests } = await supabase
+          .from("quests")
+          .select("id")
+          .eq("questgiver_id", userId);
+        if (userQuests) {
+          questIds = new Set(userQuests.map((q) => q.id));
+        }
+
+        setUserPartyIds(partyIds);
+        setUserQuestIds(questIds);
+      }
+
+      // Build query — fetch more than limit so we can filter client-side
+      let query = supabase
+        .from("activity_log")
+        .select("*, party:parties(name), quest:quests(title)")
+        .order("created_at", { ascending: false });
+
+      if (userId && (partyIds.size > 0 || questIds.size > 0)) {
+        // Filter: party_id in user's parties OR quest_id in user's quests
+        const filters: string[] = [];
+        if (partyIds.size > 0) {
+          filters.push(`party_id.in.(${[...partyIds].join(",")})`);
+        }
+        if (questIds.size > 0) {
+          filters.push(`quest_id.in.(${[...questIds].join(",")})`);
+        }
+        query = query.or(filters.join(","));
+      }
+
+      const { data } = await query.limit(limit);
+      if (data) setActivities(data as ActivityEntry[]);
+    }
+
+    load();
 
     // Subscribe to new entries
     const channel = supabase
@@ -80,6 +133,13 @@ export function ActivityFeed({ limit = 15 }: { limit?: number }) {
         { event: "INSERT", schema: "public", table: "activity_log" },
         async (payload) => {
           const newEntry = payload.new as ActivityEntry;
+
+          // Client-side filter for realtime events
+          if (userId && userPartyIds.size + userQuestIds.size > 0) {
+            const matchesParty = newEntry.party_id && userPartyIds.has(newEntry.party_id);
+            const matchesQuest = newEntry.quest_id && userQuestIds.has(newEntry.quest_id);
+            if (!matchesParty && !matchesQuest) return;
+          }
 
           // Fetch joined party/quest names
           if (newEntry.party_id) {
@@ -117,7 +177,7 @@ export function ActivityFeed({ limit = 15 }: { limit?: number }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [limit]);
+  }, [limit, userId]);
 
   if (activities.length === 0) {
     return (
@@ -129,22 +189,36 @@ export function ActivityFeed({ limit = 15 }: { limit?: number }) {
 
   return (
     <div className="space-y-2">
-      {activities.map((entry) => (
-        <div
-          key={entry.id}
-          className="glow-row flex items-center justify-between text-xs py-2 border-b border-border/40 last:border-0 transition-all duration-500"
-        >
-          <span className="flex items-center gap-2">
-            <span className="text-[10px]">{EVENT_ICONS[entry.event_type] ?? "📌"}</span>
-            <span className={`glow-text-wide text-muted-foreground ${newIds.has(entry.id) ? "glow-on" : ""}`}>
-              {formatMessage(entry)}
+      {activities.map((entry) => {
+        const href = getEntryHref(entry);
+        const content = (
+          <>
+            <span className="flex items-center gap-2">
+              <span className="text-[10px]">{EVENT_ICONS[entry.event_type] ?? "📌"}</span>
+              <span className={`glow-text-wide text-muted-foreground ${newIds.has(entry.id) ? "glow-on" : ""}`}>
+                {formatMessage(entry)}
+              </span>
             </span>
-          </span>
-          <span className="text-[10px] text-muted-foreground/50 shrink-0 ml-4">
-            {getTimeAgo(entry.created_at)}
-          </span>
-        </div>
-      ))}
+            <span className="text-[10px] text-muted-foreground/50 shrink-0 ml-4">
+              {getTimeAgo(entry.created_at)}
+            </span>
+          </>
+        );
+
+        const className = `glow-row flex items-center justify-between text-xs py-2 border-b border-border/40 last:border-0 transition-all duration-500 ${
+          href ? "cursor-pointer" : ""
+        }`;
+
+        return href ? (
+          <Link key={entry.id} href={href} className={className}>
+            {content}
+          </Link>
+        ) : (
+          <div key={entry.id} className={className}>
+            {content}
+          </div>
+        );
+      })}
     </div>
   );
 }

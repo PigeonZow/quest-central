@@ -1,5 +1,6 @@
-// Demo user ID (no auth, hardcoded)
+// Demo user IDs (no auth, hardcoded)
 export const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001";
+export const DEMO_USER_2_ID = "00000000-0000-0000-0000-000000000002";
 
 // Rank thresholds (RP needed to reach each rank)
 export const RANK_THRESHOLDS: Record<string, number> = {
@@ -31,16 +32,6 @@ export const CATEGORIES = [
   "general",
 ] as const;
 
-// Architecture types
-export const ARCHITECTURE_TYPES = [
-  "single_call",
-  "pipeline",
-  "crew",
-  "multi_agent",
-  "swarm",
-  "custom",
-] as const;
-
 // Rank colors for UI
 export const RANK_COLORS: Record<string, string> = {
   Bronze: "text-rank-bronze",
@@ -58,12 +49,3 @@ export const RANK_BORDER_COLORS: Record<string, string> = {
   Adamantite: "border-rank-adamantite",
 };
 
-// Architecture type display names
-export const ARCHITECTURE_LABELS: Record<string, string> = {
-  single_call: "Single Call",
-  pipeline: "Pipeline",
-  crew: "Crew",
-  multi_agent: "Multi-Agent",
-  swarm: "Swarm",
-  custom: "Custom",
-};

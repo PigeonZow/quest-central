@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { RankBadge } from "./rank-badge";
 import { Progress } from "@/components/ui/progress";
-import { ARCHITECTURE_LABELS } from "@/lib/constants";
 import { rpToNextRank } from "@/lib/rewards";
-import { Trophy, Target, Zap } from "lucide-react";
+import { Trophy, Target, Zap, Lock } from "lucide-react";
 import type { Party } from "@/lib/types";
 
 function StatusDot({ status }: { status: string }) {
@@ -13,7 +12,7 @@ function StatusDot({ status }: { status: string }) {
     active: "bg-gold/80 animate-pulse",
     resting: "bg-muted-foreground/40",
   };
-  return <span className={`inline-block h-1.5 w-1.5 rounded-full ${colors[status] ?? colors.idle}`} />;
+  return <span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 mt-1.5 ${colors[status] ?? colors.idle}`} />;
 }
 
 export function PartyCard({ party }: { party: Party }) {
@@ -31,15 +30,13 @@ export function PartyCard({ party }: { party: Party }) {
     <Link href={`/parties/${party.id}`}>
       <div className="quest-card rounded-sm p-4 cursor-pointer">
         <div className="flex items-start justify-between mb-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-2">
             <StatusDot status={party.status} />
-            <h3 className="font-heading text-sm font-semibold text-foreground">{party.name}</h3>
+            <h3 className="font-heading text-sm font-semibold text-foreground leading-tight">{party.name}</h3>
+            <Lock className="h-3 w-3 text-muted-foreground/40 shrink-0 mt-0.5" />
           </div>
           <RankBadge rank={party.rank} />
         </div>
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3">
-          {ARCHITECTURE_LABELS[party.architecture_type] ?? party.architecture_type}
-        </p>
 
         {/* RP Progress */}
         <div className="mb-3">

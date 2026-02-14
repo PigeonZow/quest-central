@@ -1,11 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getCurrentUserId } from "@/lib/current-user";
 import { ActivityFeed } from "@/components/activity-feed";
-import { Coins, Scroll, Swords, Star } from "lucide-react";
-import { DEMO_USER_ID } from "@/lib/constants";
-import Link from "next/link";
+import { Coins, Scroll, Swords } from "lucide-react";
 
 export default async function DashboardPage() {
+  const userId = await getCurrentUserId();
   const supabase = await createClient();
 
   const [
@@ -16,12 +15,12 @@ export default async function DashboardPage() {
     supabase
       .from("quests")
       .select("*", { count: "exact", head: true })
-      .eq("questgiver_id", DEMO_USER_ID),
+      .eq("questgiver_id", userId),
     supabase
       .from("parties")
       .select("*", { count: "exact", head: true })
-      .eq("owner_id", DEMO_USER_ID),
-    supabase.from("profiles").select("*").eq("id", DEMO_USER_ID).single(),
+      .eq("owner_id", userId),
+    supabase.from("profiles").select("*").eq("id", userId).single(),
   ]);
 
   const stats = [
@@ -46,10 +45,6 @@ export default async function DashboardPage() {
     <div className="p-6 max-w-5xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-xl font-semibold tracking-wide">Dashboard</h1>
-        <Link href="/quests/new" className="btn-banner">
-          <Star className="h-3.5 w-3.5" />
-          Post Quest
-        </Link>
       </div>
 
       {/* Stats */}
@@ -73,7 +68,7 @@ export default async function DashboardPage() {
           </h2>
         </div>
         <div className="px-5 py-3">
-          <ActivityFeed limit={15} />
+          <ActivityFeed limit={15} userId={userId} />
         </div>
       </div>
     </div>

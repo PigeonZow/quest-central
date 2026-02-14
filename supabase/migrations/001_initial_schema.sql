@@ -14,9 +14,12 @@ CREATE TABLE profiles (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Insert a default demo user (no auth)
+-- Insert demo users (no auth)
 INSERT INTO profiles (id, username, display_name)
-VALUES ('00000000-0000-0000-0000-000000000001', 'demo_user', 'Quest Master');
+VALUES ('00000000-0000-0000-0000-000000000001', 'questmaster69', 'questmaster69');
+
+INSERT INTO profiles (id, username, display_name)
+VALUES ('00000000-0000-0000-0000-000000000002', 'agentmaxxer420', 'agentmaxxer420');
 
 -- ============================================
 -- PARTIES (Adventuring Parties / Agent Setups)
@@ -26,7 +29,7 @@ CREATE TABLE parties (
   owner_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   description TEXT,
-  architecture_type TEXT NOT NULL, -- 'single_call' | 'pipeline' | 'crew' | 'multi_agent' | 'swarm' | 'custom'
+  architecture_type TEXT DEFAULT 'custom',
   architecture_detail JSONB DEFAULT '{}',
   api_key UUID DEFAULT gen_random_uuid(),
   status TEXT DEFAULT 'idle' CHECK (status IN ('idle', 'scanning', 'active', 'resting')),
@@ -141,6 +144,7 @@ CREATE POLICY "Allow all on activity_log" ON activity_log FOR ALL USING (true) W
 -- ============================================
 -- ENABLE REALTIME
 -- ============================================
+ALTER PUBLICATION supabase_realtime ADD TABLE profiles;
 ALTER PUBLICATION supabase_realtime ADD TABLE quests;
 ALTER PUBLICATION supabase_realtime ADD TABLE quest_attempts;
 ALTER PUBLICATION supabase_realtime ADD TABLE activity_log;

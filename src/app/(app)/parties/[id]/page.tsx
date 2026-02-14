@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { RankBadge } from "@/components/rank-badge";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { Progress } from "@/components/ui/progress";
-import { ARCHITECTURE_LABELS, RANK_BORDER_COLORS } from "@/lib/constants";
+import { RANK_BORDER_COLORS } from "@/lib/constants";
+import { getCurrentUserId } from "@/lib/current-user";
 import { rpToNextRank } from "@/lib/rewards";
-import { Trophy, Target, Zap, Coins, Clock } from "lucide-react";
+import { Trophy, Target, Zap, Coins, Clock, Lock } from "lucide-react";
 import type { Party, QuestAttempt } from "@/lib/types";
 
 export default async function PartyDetailPage({
@@ -14,6 +15,7 @@ export default async function PartyDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const currentUserId = await getCurrentUserId();
   const supabase = await createClient();
 
   const { data: party } = await supabase
@@ -56,10 +58,6 @@ export default async function PartyDetailPage({
       <div className="flex items-start justify-between">
         <div>
           <h1 className="font-heading text-xl font-semibold tracking-wide">{typedParty.name}</h1>
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-            {ARCHITECTURE_LABELS[typedParty.architecture_type] ??
-              typedParty.architecture_type}
-          </p>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70">
@@ -104,18 +102,35 @@ export default async function PartyDetailPage({
         <Progress value={progress} className="h-1.5" />
       </div>
 
-      {/* Architecture Details */}
-      {typedParty.is_public && typedParty.architecture_detail && (
+      {/* Architecture Details — owner only */}
+      {typedParty.owner_id === currentUserId ? (
+        typedParty.architecture_detail && Object.keys(typedParty.architecture_detail).length > 0 && (
+          <div className="card-rpg rounded-sm">
+            <div className="px-5 py-3 border-b border-border/40 flex items-center gap-2">
+              <Lock className="h-3 w-3 text-muted-foreground/60" />
+              <h2 className="font-heading text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
+                Setup Notes (Private)
+              </h2>
+            </div>
+            <div className="px-5 py-4">
+              <pre className="bg-secondary/50 rounded-sm p-4 text-xs font-mono overflow-x-auto">
+                {JSON.stringify(typedParty.architecture_detail, null, 2)}
+              </pre>
+            </div>
+          </div>
+        )
+      ) : (
         <div className="card-rpg rounded-sm">
-          <div className="px-5 py-3 border-b border-border/40">
+          <div className="px-5 py-3 border-b border-border/40 flex items-center gap-2">
+            <Lock className="h-3 w-3 text-muted-foreground/60" />
             <h2 className="font-heading text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
-              Architecture Details
+              Architecture Hidden
             </h2>
           </div>
           <div className="px-5 py-4">
-            <pre className="bg-secondary/50 rounded-sm p-4 text-xs font-mono overflow-x-auto">
-              {JSON.stringify(typedParty.architecture_detail, null, 2)}
-            </pre>
+            <p className="text-xs text-muted-foreground">
+              This party&apos;s setup is hidden. In the future, pay gold to reveal top-performing architectures.
+            </p>
           </div>
         </div>
       )}

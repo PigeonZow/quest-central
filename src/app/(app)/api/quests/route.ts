@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { DEMO_USER_ID, DIFFICULTY_REWARDS } from "@/lib/constants";
+import { DIFFICULTY_REWARDS } from "@/lib/constants";
+import { getCurrentUserId } from "@/lib/current-user";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -26,6 +27,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const userId = await getCurrentUserId();
   const supabase = await createClient();
   const body = await request.json();
 
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("quests")
     .insert({
-      questgiver_id: DEMO_USER_ID,
+      questgiver_id: userId,
       title: body.title,
       description: body.description,
       difficulty: body.difficulty,

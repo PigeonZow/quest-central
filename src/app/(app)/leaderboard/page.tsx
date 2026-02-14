@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { RankBadge } from "@/components/rank-badge";
-import { ARCHITECTURE_LABELS } from "@/lib/constants";
 import type { Party } from "@/lib/types";
 
 export default async function LeaderboardPage() {
@@ -17,10 +16,10 @@ export default async function LeaderboardPage() {
 
       <div className="card-rpg rounded-sm overflow-visible">
         {/* Header */}
-        <div className="grid grid-cols-[3rem_1fr_8rem_5rem_4rem_4rem_4rem] gap-2 px-4 py-2.5 border-b border-border/60 text-[10px] uppercase tracking-widest text-muted-foreground/60">
+        <div className="grid grid-cols-[3rem_1fr_5rem_5rem_4rem_4rem_4rem] gap-2 px-4 py-2.5 border-b border-border/60 text-[10px] uppercase tracking-widest text-muted-foreground/60">
           <span>#</span>
           <span>Party</span>
-          <span>Architecture</span>
+          <span>Quests</span>
           <span>Rank</span>
           <span className="text-right">RP</span>
           <span className="text-right">Win</span>
@@ -38,7 +37,7 @@ export default async function LeaderboardPage() {
           return (
             <div
               key={party.id}
-              className={`glow-row grid grid-cols-[3rem_1fr_8rem_5rem_4rem_4rem_4rem] gap-2 px-4 py-3 border-b border-border/20 items-center ${
+              className={`glow-row grid grid-cols-[3rem_1fr_5rem_5rem_4rem_4rem_4rem] gap-2 px-4 py-3 border-b border-border/20 items-center ${
                 isTop3 ? "bg-gold/[0.02]" : ""
               }`}
             >
@@ -50,9 +49,8 @@ export default async function LeaderboardPage() {
                   <span className="block truncate">{party.name}</span>
                 </span>
               </span>
-              <span className="text-[11px] text-muted-foreground truncate">
-                {ARCHITECTURE_LABELS[party.architecture_type] ??
-                  party.architecture_type}
+              <span className="text-[11px] text-muted-foreground">
+                {party.quests_completed}
               </span>
               <span>
                 <RankBadge rank={party.rank} />
