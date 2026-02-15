@@ -32,8 +32,14 @@ async function solve_quest(quest: Quest): Promise<QuestResult> {
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-5-20250929",
-      max_tokens: 2048,
-      system: "You are an expert assistant. Complete the given task directly and thoroughly.",
+      max_tokens: 16384,
+      system: `You are an expert assistant. Complete the given task directly and thoroughly.
+
+IMPORTANT FORMATTING RULES:
+1. Always start with a brief explanation of your approach and solution (this becomes the "ReadMe" tab).
+2. If the task involves code, wrap ALL code in markdown fenced code blocks with the language tag (e.g. \`\`\`html, \`\`\`css, \`\`\`js). Separate different files into their own code blocks.
+3. For web/game tasks, produce COMPLETE, self-contained files. Always include ALL HTML, CSS, and JS as separate code blocks.
+4. Never truncate code — always output the full implementation.`,
       messages: [{
         role: "user",
         content: `Task: ${quest.title}\n\nDescription: ${quest.description}${quest.acceptance_criteria ? `\n\nAcceptance Criteria: ${quest.acceptance_criteria}` : ""}\n\nComplete this task now.`,

@@ -87,11 +87,14 @@ Now execute the plan step by step. Provide your complete, thorough output.`;
   const execution = await callClaude(
     `You are an expert execution agent. Follow the given plan precisely and produce high-quality output. Be thorough and detailed.
 
-CRITICAL: If your response includes ANY code (HTML, CSS, JS, Python, etc.), you MUST wrap the code entirely in standard markdown code blocks with the language specified (e.g., \`\`\`html
-code here
-\`\`\`). Do not ever output raw HTML/code as plain text.`,
+IMPORTANT FORMATTING RULES:
+1. Start with a brief explanation of your approach and solution (this becomes the "ReadMe" tab for reviewers).
+2. If the task involves code, wrap ALL code in markdown fenced code blocks with the language tag (e.g. \`\`\`html, \`\`\`css, \`\`\`js). Separate different files into their own code blocks.
+3. For web/game tasks, produce COMPLETE, self-contained files. Always include ALL HTML, CSS, and JS as separate code blocks.
+4. Never truncate code — always output the full implementation.
+5. Do not ever output raw HTML/code as plain text.`,
     executePrompt,
-    8192
+    16384
   );
   totalTokens += execution.tokens;
   console.log(`  Execution complete (${execution.tokens} tokens)`);
@@ -115,11 +118,12 @@ Instructions:
   const review = await callClaude(
     `You are a critical review agent. Evaluate output quality and improve if needed. If the output is already good, approve it. Always return the final output.
 
-CRITICAL: If the output includes ANY code (HTML, CSS, JS, Python, etc.), you MUST preserve it in standard markdown code blocks with the language specified (e.g., \`\`\`html
-code here
-\`\`\`). Do not ever output raw HTML/code as plain text.`,
+IMPORTANT: The output MUST contain both:
+1. A brief explanation/readme section (plain markdown, no code fences) at the top.
+2. All code in properly fenced markdown code blocks with language tags.
+Never strip the explanation or the code blocks. Preserve both. Do not ever output raw HTML/code as plain text.`,
     reviewPrompt,
-    8192
+    16384
   );
   totalTokens += review.tokens;
   console.log(`  Review complete (${review.tokens} tokens)`);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -17,6 +17,8 @@ import {
   Braces,
   File,
   FolderOpen,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 
 /* ═══════════════════════════════════════════════════════════
@@ -152,21 +154,97 @@ function parseFiles(text: string): ParsedFile[] {
   return files;
 }
 
-/** Build an HTML document for live preview from parsed files */
-function buildPreviewHtml(files: ParsedFile[]): string {
-  const html = files.find((f) => f.language === "html")?.code ?? "";
-  const css = files.find((f) => f.language === "css")?.code ?? "";
-  const js =
-    files.find((f) => f.language === "js" || f.language === "javascript")
-      ?.code ?? "";
+/**
+ * Bundle multi-file projects into a single runnable HTML document.
+ *
+ * Takes the raw HTML file as the base, then injects:
+ *  - All CSS files into a <style> block in the <head>
+ *  - All JS files into a <script> block before </body>
+ *  - Python files via PyScript if present
+ *
+ * If the HTML is already a full document (has <html>), the injection is
+ * surgical. Otherwise we wrap everything in a minimal shell.
+ */
+/** CSS injected into every preview to constrain content to the iframe viewport */
+const VIEWPORT_FIT_CSS = `html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;box-sizing:border-box}canvas{display:block;max-width:100%;max-height:100%}`;
+
+function getBundledCode(files: ParsedFile[]): string {
+  const htmlFile = files.find((f) => f.language === "html");
+  const cssFiles = files.filter((f) =>
+    ["css", "scss"].includes(f.language),
+  );
+  const jsFiles = files.filter((f) =>
+    ["js", "javascript"].includes(f.language),
+  );
+  const pyFiles = files.filter((f) =>
+    ["py", "python"].includes(f.language),
+  );
+
+  let html = htmlFile?.code ?? "";
+  const cssBlock = cssFiles.map((f) => f.code).join("\n");
+  const jsBlock = jsFiles.map((f) => f.code).join("\n\n");
+  const fitAndUserCss = `${VIEWPORT_FIT_CSS}\n${cssBlock}`;
+
+  // ── Full document: inject into the existing structure ──
+  if (/<html[\s>]/i.test(html)) {
+    // Inject viewport-fit + user CSS into <head>
+    const styleTag = `<style>\n${fitAndUserCss}\n</style>`;
+    if (/<\/head>/i.test(html)) {
+      html = html.replace(/<\/head>/i, `${styleTag}\n</head>`);
+    } else if (/<head[^>]*>/i.test(html)) {
+      html = html.replace(/<head([^>]*)>/i, `<head$1>\n${styleTag}`);
+    } else {
+      html = html.replace(/<html([^>]*)>/i, `<html$1>\n<head>${styleTag}</head>`);
+    }
+
+    // Inject JS before </body>
+    if (jsBlock) {
+      if (/<\/body>/i.test(html)) {
+        html = html.replace(/<\/body>/i, `<script>\n${jsBlock}\n<\/script>\n</body>`);
+      } else {
+        html += `\n<script>\n${jsBlock}\n<\/script>`;
+      }
+    }
+
+    // PyScript support
+    if (pyFiles.length > 0) {
+      const pyBlock = pyFiles.map((f) => f.code).join("\n\n");
+      if (!html.includes("pyscript")) {
+        html = html.replace(
+          /<\/head>/i,
+          `<link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css"/>\n<script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"><\/script>\n</head>`,
+        );
+      }
+      if (/<\/body>/i.test(html)) {
+        html = html.replace(/<\/body>/i, `<script type="py">\n${pyBlock}\n<\/script>\n</body>`);
+      }
+    }
+
+    return html;
+  }
+
+  // ── Fragment: wrap in a minimal shell ──
+  const pyIncludes =
+    pyFiles.length > 0
+      ? `<link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css"/>\n<script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"><\/script>\n`
+      : "";
+  const pyBlock =
+    pyFiles.length > 0
+      ? `<script type="py">\n${pyFiles.map((f) => f.code).join("\n\n")}\n<\/script>\n`
+      : "";
 
   return `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8"/>
-<style>body{margin:0;padding:16px;font-family:system-ui,sans-serif;background:#1a1a17;color:#c4b998}${css}</style>
+${pyIncludes}<style>${VIEWPORT_FIT_CSS}
+body{font-family:system-ui,sans-serif;background:#1a1a17;color:#c4b998}
+${cssBlock}</style>
 </head>
-<body>${html}<script>${js}<\/script></body>
+<body>
+${html}
+${pyBlock}${jsBlock ? `<script>\n${jsBlock}\n<\/script>` : ""}
+</body>
 </html>`;
 }
 
@@ -372,6 +450,20 @@ interface SubmissionViewerProps {
 }
 
 export function SubmissionViewer({ content, fillHeight }: SubmissionViewerProps) {
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = useCallback(() => {
+    const el = previewContainerRef.current;
+    if (!el) return;
+
+    if (!document.fullscreenElement) {
+      el.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  }, []);
+
   const containsCode = useMemo(() => hasCodeBlocks(content), [content]);
   // Normalize raw HTML into fenced code blocks before any parsing
   const normalized = useMemo(
@@ -447,18 +539,41 @@ export function SubmissionViewer({ content, fillHeight }: SubmissionViewerProps)
         {/* ── Live Preview Tab ── */}
         {canPreview && (
           <TabsContent value="preview" className={fillHeight ? "flex flex-col flex-1 min-h-0" : ""}>
-            <div className={`mt-3 overflow-hidden rounded-sm border border-slate-700 bg-[#0d0d0d] ${fillHeight ? "flex flex-col flex-1 min-h-0" : ""}`}>
+            <div
+              ref={previewContainerRef}
+              className={`mt-3 flex flex-col overflow-hidden rounded-sm border border-slate-700 bg-[#0d0d0d] ${fillHeight ? "flex-1 min-h-0" : ""}`}
+            >
               <div className="flex items-center border-b border-slate-700 bg-secondary/40 px-4 py-2 shrink-0">
                 <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                   Live Preview
                 </span>
+                <span className="ml-auto flex items-center gap-3">
+                  <span className="text-[10px] text-muted-foreground/40">
+                    Click preview to interact
+                  </span>
+                  <button
+                    onClick={toggleFullscreen}
+                    className="flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:bg-gold/10 hover:text-gold"
+                    title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                  >
+                    {isFullscreen ? (
+                      <><Minimize2 className="h-3 w-3" /> Exit</>
+                    ) : (
+                      <><Maximize2 className="h-3 w-3" /> Fullscreen</>
+                    )}
+                  </button>
+                </span>
               </div>
-              <iframe
-                srcDoc={buildPreviewHtml(files)}
-                sandbox="allow-scripts"
-                title="Submission Preview"
-                className={`w-full border-0 bg-[#1a1a17] ${fillHeight ? "flex-1 min-h-0" : "h-[500px]"}`}
-              />
+              <div className={`relative flex-1 w-full overflow-hidden ${fillHeight ? "min-h-0" : "h-[500px]"}`}>
+                <iframe
+                  srcDoc={getBundledCode(files)}
+                  sandbox="allow-scripts allow-same-origin"
+                  title="Submission Preview"
+                  className="absolute inset-0 h-full w-full border-0 bg-[#1a1a17]"
+                  onMouseEnter={(e) => e.currentTarget.focus()}
+                  tabIndex={0}
+                />
+              </div>
             </div>
           </TabsContent>
         )}

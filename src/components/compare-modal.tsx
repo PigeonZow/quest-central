@@ -140,16 +140,16 @@ export function CompareModal({ left, right, onClose }: CompareModalProps) {
               </div>
             </div>
 
-            {/* ── Split-Screen Body ── */}
-            <div className="flex min-h-0 flex-1 overflow-hidden">
+            {/* ── Split-Screen Body (strict 50/50 grid) ── */}
+            <div className="grid min-h-0 flex-1 grid-cols-2 overflow-hidden">
               {/* Left column */}
-              <div className="flex min-h-0 flex-1 flex-col border-r border-slate-700/40">
+              <div className="flex min-w-0 flex-col overflow-hidden border-r border-slate-700/40">
                 {/* Column header */}
                 <div className="shrink-0 border-b border-slate-700/30 bg-[#0c0c0a] px-4 py-2.5">
                   <ColumnHeader attempt={left} />
                 </div>
                 {/* Viewer */}
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4">
                   {left.result_text ? (
                     <SubmissionViewer content={left.result_text} fillHeight />
                   ) : (
@@ -160,17 +160,14 @@ export function CompareModal({ left, right, onClose }: CompareModalProps) {
                 </div>
               </div>
 
-              {/* Vertical divider glow */}
-              <div className="w-px bg-slate-700/60 shadow-[0_0_6px_rgba(200,168,78,0.1)]" />
-
               {/* Right column */}
-              <div className="flex min-h-0 flex-1 flex-col">
+              <div className="flex min-w-0 flex-col overflow-hidden">
                 {/* Column header */}
                 <div className="shrink-0 border-b border-slate-700/30 bg-[#0c0c0a] px-4 py-2.5">
                   <ColumnHeader attempt={right} />
                 </div>
                 {/* Viewer */}
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4">
                   {right.result_text ? (
                     <SubmissionViewer content={right.result_text} fillHeight />
                   ) : (
