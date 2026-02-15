@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { RankBadge } from "@/components/rank-badge";
-import { Trophy, Clock, CheckCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { Trophy, Clock, CheckCircle, Eye } from "lucide-react";
 
 interface SubmissionCardProps {
   attempt: {
@@ -15,29 +14,61 @@ interface SubmissionCardProps {
     party?: { name: string; rank: string } | null;
   };
   isQuestgiver: boolean;
+  onSelect?: () => void;
+  /** Compare mode */
+  isCompareChecked?: boolean;
+  compareDisabled?: boolean;
+  onCompareToggle?: () => void;
 }
 
-export function SubmissionCard({ attempt, isQuestgiver }: SubmissionCardProps) {
-  const [expanded, setExpanded] = useState(false);
+export function SubmissionCard({
+  attempt,
+  isQuestgiver,
+  onSelect,
+  isCompareChecked,
+  compareDisabled,
+  onCompareToggle,
+}: SubmissionCardProps) {
   const isWinner = attempt.status === "won";
   const hasContent = !!attempt.result_text;
+  const canOpen = isQuestgiver && hasContent;
+  const showCompare = isQuestgiver && hasContent && onCompareToggle;
 
   return (
     <div
-      className={`rounded-sm border p-4 ${
+      className={`rounded-sm border p-4 transition-colors ${
         isWinner ? "border-gold/30 bg-gold/[0.02]" : "border-border/40"
-      }`}
+      } ${canOpen ? "cursor-pointer hover:border-gold/20 hover:bg-white/[0.01]" : ""}`}
+      onClick={() => canOpen && onSelect?.()}
     >
-      <div
-        className={`flex items-center justify-between ${isQuestgiver && hasContent ? "cursor-pointer" : ""}`}
-        onClick={() => isQuestgiver && hasContent && setExpanded(!expanded)}
-      >
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {isQuestgiver && hasContent && (
-            expanded
-              ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60" />
-              : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+          {/* Compare checkbox */}
+          {showCompare && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!compareDisabled || isCompareChecked) {
+                  onCompareToggle();
+                }
+              }}
+              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] border transition-all ${
+                isCompareChecked
+                  ? "border-gold bg-gold/20 text-gold shadow-[0_0_6px_rgba(200,168,78,0.25)]"
+                  : compareDisabled
+                    ? "border-slate-600/40 bg-transparent cursor-not-allowed opacity-30"
+                    : "border-slate-600 bg-transparent hover:border-gold/50"
+              }`}
+              aria-label={`Select ${attempt.party?.name ?? "party"} for comparison`}
+            >
+              {isCompareChecked && (
+                <svg className="h-2.5 w-2.5" viewBox="0 0 10 10" fill="none">
+                  <path d="M2 5L4.5 7.5L8 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
           )}
+
           {isWinner && <Trophy className="h-4 w-4 text-gold" />}
           {attempt.ranking !== null && (
             <span className={`font-heading text-sm font-bold ${isWinner ? "text-gold" : "text-muted-foreground"}`}>
@@ -71,6 +102,9 @@ export function SubmissionCard({ attempt, isQuestgiver }: SubmissionCardProps) {
           >
             {attempt.status === "in_progress" ? "working..." : attempt.status}
           </span>
+          {canOpen && (
+            <Eye className="h-3.5 w-3.5 text-muted-foreground/40" />
+          )}
         </div>
       </div>
 
@@ -78,14 +112,6 @@ export function SubmissionCard({ attempt, isQuestgiver }: SubmissionCardProps) {
         <div className="text-xs text-muted-foreground/70 mt-2 flex items-center gap-1">
           <CheckCircle className="h-3 w-3 text-gold-dim shrink-0" />
           <span className="font-semibold text-gold-dim">Oracle:</span> {attempt.questgiver_feedback}
-        </div>
-      )}
-
-      {isQuestgiver && expanded && attempt.result_text && (
-        <div className="mt-3 rounded-sm bg-secondary/50 border border-border/40 p-4 max-h-[500px] overflow-y-auto">
-          <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed font-mono">
-            {attempt.result_text}
-          </p>
         </div>
       )}
     </div>

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { DIFFICULTY_REWARDS } from "@/lib/constants";
 import { getCurrentUserId } from "@/lib/current-user";
-import { classifyDifficulty } from "@/lib/oracle";
+import { classifyQuest } from "@/lib/oracle";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -48,8 +48,8 @@ export async function POST(request: Request) {
     );
   }
 
-  // Oracle auto-classifies difficulty
-  const { difficulty, reasoning } = await classifyDifficulty(
+  // Oracle auto-classifies difficulty AND category
+  const { difficulty, category, reasoning } = await classifyQuest(
     body.title,
     body.description,
     body.acceptance_criteria || null
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       title: body.title,
       description: body.description,
       difficulty,
-      category: body.category || "general",
+      category,
       gold_reward: goldReward,
       rp_reward: rpReward,
       max_attempts: body.max_attempts || 5,
@@ -96,6 +96,7 @@ export async function POST(request: Request) {
     details: {
       title: data.title,
       difficulty: data.difficulty,
+      category: data.category,
       oracle_reasoning: reasoning,
     },
   });

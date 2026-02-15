@@ -11,13 +11,15 @@ const supabase = createClient(
 const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001";
 const DEMO_USER_2_ID = "00000000-0000-0000-0000-000000000002";
 
-// Party ownership: first 3 belong to User 1, last 2 to User 2
+// Party ownership: first 3 belong to User 1, last 4 to mix of User 1 and 2
 const PARTY_OWNERS = [
   DEMO_USER_ID,   // Vanilla Claude
   DEMO_USER_ID,   // Claude Agent SDK Party
   DEMO_USER_ID,   // CrewAI Collective
   DEMO_USER_2_ID, // LangGraph Legends
   DEMO_USER_2_ID, // The Giga Swarm
+  DEMO_USER_2_ID, // Vanilla GPT-4o
+  DEMO_USER_ID,   // GPT-4o Pipeline
 ];
 
 // ============================================
@@ -120,6 +122,43 @@ const parties = [
     gold_earned: 3500,
     avg_score: 93,
   },
+  {
+    name: "Vanilla GPT-4o",
+    description:
+      "Single GPT-4o API call. OpenAI's flagship model in one shot. Quick and punchy — great breadth of knowledge, strong on writing and creative tasks.",
+    architecture_type: "single_call",
+    architecture_detail: {
+      agent_count: 1,
+      model: "gpt-4o",
+      tools: "none",
+      strategy: "Direct prompt with task description. No retry, no review.",
+    },
+    rp: 200,
+    rank: "Silver",
+    quests_completed: 8,
+    quests_failed: 4,
+    gold_earned: 900,
+    avg_score: 67,
+  },
+  {
+    name: "GPT-4o Pipeline",
+    description:
+      "Three-phase GPT-4o pipeline: Planner → Executor → Reviewer. Methodical multi-step approach using OpenAI's best model at each stage.",
+    architecture_type: "multi_agent",
+    architecture_detail: {
+      agent_count: 3,
+      model: "gpt-4o",
+      tools: "none",
+      strategy:
+        "Planner agent creates execution plan → Executor agent follows plan step-by-step → Reviewer agent polishes and validates output.",
+    },
+    rp: 450,
+    rank: "Gold",
+    quests_completed: 11,
+    quests_failed: 2,
+    gold_earned: 1950,
+    avg_score: 78,
+  },
 ];
 
 // ============================================
@@ -189,19 +228,19 @@ const openQuests = [
 // Performance data: scores by [partyIndex][difficulty]
 // Tells the narrative: simple setups plateau, complex ones scale with difficulty
 const performanceMatrix: Record<string, number[]> = {
-  // [Vanilla, SDK, CrewAI, LangGraph, Swarm]
-  C: [85, 88, 80, 82, 90],
-  B: [70, 83, 68, 72, 88],
-  A: [52, 80, 58, 63, 92],
-  S: [40, 82, 55, 60, 95],
+  // [Vanilla Claude, SDK, CrewAI, LangGraph, Swarm, Vanilla GPT-4o, GPT-4o Pipeline]
+  C: [85, 88, 80, 82, 90, 82, 86],
+  B: [70, 83, 68, 72, 88, 66, 79],
+  A: [52, 80, 58, 63, 92, 48, 74],
+  S: [40, 82, 55, 60, 95, 35, 70],
 };
 
 const timeMatrix: Record<string, number[]> = {
-  // seconds: [Vanilla, SDK, CrewAI, LangGraph, Swarm]
-  C: [3, 12, 8, 10, 30],
-  B: [5, 20, 15, 18, 45],
-  A: [6, 30, 22, 25, 55],
-  S: [8, 40, 28, 32, 65],
+  // seconds: [Vanilla Claude, SDK, CrewAI, LangGraph, Swarm, Vanilla GPT-4o, GPT-4o Pipeline]
+  C: [3, 12, 8, 10, 30, 4, 14],
+  B: [5, 20, 15, 18, 45, 6, 22],
+  A: [6, 30, 22, 25, 55, 7, 32],
+  S: [8, 40, 28, 32, 65, 10, 44],
 };
 
 const DIFFICULTY_REWARDS: Record<string, { gold: number; rp: number }> = {

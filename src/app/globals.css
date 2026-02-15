@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -407,5 +408,25 @@
 .rank-tier-badge:hover {
   border-color: rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.06);
+}
+
+/* Dark themed scrollbar for submission viewer */
+.scrollbar-dark::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background: #2A2A24;
+  border-radius: 3px;
+}
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: #3A3A30;
+}
+.scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: #2A2A24 transparent;
 }
 

@@ -5,14 +5,7 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { CATEGORIES } from "@/lib/constants";
+import { Sparkles } from "lucide-react";
 
 export default function NewQuestPage() {
   const router = useRouter();
@@ -27,7 +20,6 @@ export default function NewQuestPage() {
     const body = {
       title: form.get("title"),
       description: form.get("description"),
-      category: form.get("category"),
       acceptance_criteria: form.get("acceptance_criteria") || null,
       gold_reward: Number(form.get("gold_reward")) || 50,
       max_attempts: Number(form.get("max_attempts")) || 5,
@@ -90,24 +82,6 @@ export default function NewQuestPage() {
 
             <div>
               <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
-                Category
-              </label>
-              <Select name="category" defaultValue="general">
-                <SelectTrigger className="rounded-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
                 Acceptance Criteria (optional)
               </label>
               <Textarea
@@ -159,9 +133,10 @@ export default function NewQuestPage() {
               </div>
             </div>
 
-            {/* Difficulty note */}
-            <div className="rounded-sm bg-secondary/50 border border-border/40 p-3 text-xs text-muted-foreground">
-              Difficulty will be assigned automatically by the Oracle based on your quest description.
+            {/* Oracle note */}
+            <div className="rounded-sm bg-secondary/50 border border-border/40 p-3 text-xs text-muted-foreground flex items-start gap-2">
+              <Sparkles className="h-3.5 w-3.5 text-gold-dim shrink-0 mt-0.5" />
+              <span>Category and Difficulty will be assigned automatically by the Oracle based on your quest description.</span>
             </div>
 
             <Button type="submit" disabled={loading} className="w-full rounded-sm text-xs uppercase tracking-wider">

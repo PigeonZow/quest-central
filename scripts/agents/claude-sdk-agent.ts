@@ -57,42 +57,79 @@ async function solve_quest(quest: Quest): Promise<QuestResult> {
 
   // Step 1: PLAN
   console.log("  Step 1: Planning approach...");
+  const planPrompt = `You are a planning agent. Analyze this task and create a clear execution plan.
+
+Task: ${quest.title}
+Description: ${quest.description}${criteria ? `\nAcceptance Criteria: ${criteria}` : ""}
+
+Output a numbered plan with 3-5 steps. Be specific about what each step should accomplish.`;
+
   const plan = await callClaude(
     "You are a meticulous planning agent. Break tasks into clear, actionable steps.",
-    `Analyze this task and create a clear execution plan.\n\nTask: ${quest.title}\nDescription: ${quest.description}${criteria ? `\nAcceptance Criteria: ${criteria}` : ""}\n\nOutput a numbered plan with 3-5 steps.`,
-    1024
+    planPrompt,
+    2048
   );
   totalTokens += plan.tokens;
   console.log(`  Plan created (${plan.tokens} tokens)`);
 
   // Step 2: EXECUTE
   console.log("  Step 2: Executing plan...");
+  const executePrompt = `You are an execution agent. Follow this plan to complete the task.
+
+Task: ${quest.title}
+Description: ${quest.description}${criteria ? `\nAcceptance Criteria: ${criteria}` : ""}
+
+Plan to follow:
+${plan.text}
+
+Now execute the plan step by step. Provide your complete, thorough output.`;
+
   const execution = await callClaude(
-    "You are an expert execution agent. Follow the given plan precisely and produce high-quality output.",
-    `Follow this plan to complete the task.\n\nTask: ${quest.title}\nDescription: ${quest.description}${criteria ? `\nAcceptance Criteria: ${criteria}` : ""}\n\nPlan to follow:\n${plan.text}\n\nExecute the plan step by step. Provide your complete output.`,
-    3072
+    `You are an expert execution agent. Follow the given plan precisely and produce high-quality output. Be thorough and detailed.
+
+CRITICAL: If your response includes ANY code (HTML, CSS, JS, Python, etc.), you MUST wrap the code entirely in standard markdown code blocks with the language specified (e.g., \`\`\`html
+code here
+\`\`\`). Do not ever output raw HTML/code as plain text.`,
+    executePrompt,
+    8192
   );
   totalTokens += execution.tokens;
   console.log(`  Execution complete (${execution.tokens} tokens)`);
 
-  // Step 3: REVIEW
-  console.log("  Step 3: Self-reviewing...");
+  // Step 3: REVIEW & POLISH
+  console.log("  Step 3: Reviewing & polishing...");
+  const reviewPrompt = `You are a quality-assurance agent. Your job is to produce the FINAL deliverable for this task.
+
+Original Task: ${quest.title}
+Description: ${quest.description}${criteria ? `\nAcceptance Criteria: ${criteria}` : ""}
+
+Draft output to review:
+${execution.text}
+
+Instructions:
+- If the draft is good, output it exactly as-is (no commentary, no "review passed" notes).
+- If the draft has errors, missing parts, or could be improved, output the CORRECTED/IMPROVED version.
+- Your output IS the final submission. Do NOT include any meta-commentary, review notes, or self-assessment.
+- Do NOT wrap the output in extra headings like "Final Version" or "Improved Version" — just output the work itself.`;
+
   const review = await callClaude(
-    "You are a critical review agent. Evaluate output quality and improve if needed.",
-    `Review the following output against the original task.\n\nTask: ${quest.title}\nDescription: ${quest.description}${criteria ? `\nAcceptance Criteria: ${criteria}` : ""}\n\nOutput to review:\n${execution.text}\n\nIf good, approve it. If improvements are needed, provide the improved version.`,
-    3072
+    `You are a critical review agent. Evaluate output quality and improve if needed. If the output is already good, approve it. Always return the final output.
+
+CRITICAL: If the output includes ANY code (HTML, CSS, JS, Python, etc.), you MUST preserve it in standard markdown code blocks with the language specified (e.g., \`\`\`html
+code here
+\`\`\`). Do not ever output raw HTML/code as plain text.`,
+    reviewPrompt,
+    8192
   );
   totalTokens += review.tokens;
   console.log(`  Review complete (${review.tokens} tokens)`);
 
-  return {
-    result_text: review.text,
-    token_count: totalTokens,
-  };
+  // Submit only the polished final output — not the plan or review scaffolding
+  return { result_text: review.text, token_count: totalTokens };
 }
 
-// ── select_quest: prefer harder quests ─────────────────────────────
-// Multi-step pipelines shine on complex tasks.
+// ── select_quest (optional): party leader logic ────────────────────
+// Prefer harder quests (A and S rank) - this is where the multi-step approach shines.
 
 async function select_quest(quests: Quest[]): Promise<Quest | null> {
   const available = quests.filter((q) => q.slots_remaining > 0);

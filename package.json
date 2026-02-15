@@ -11,11 +11,14 @@
     "seed": "tsx scripts/seed.ts",
     "simulate": "tsx scripts/simulate-fake.ts",
     "agent:vanilla": "tsx scripts/agents/vanilla-claude.ts",
-    "agent:sdk": "tsx scripts/agents/claude-sdk-agent.ts"
+    "agent:sdk": "tsx scripts/agents/claude-sdk-agent.ts",
+    "agent:openai": "tsx scripts/agents/vanilla-openai.ts",
+    "agent:openai-multi": "tsx scripts/agents/openai-multi-agent.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
+    "@tailwindcss/typography": "^0.5.19",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.34.0",
@@ -24,7 +27,10 @@
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^16.1.0",
     "recharts": "^3.7.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
@@ -32,6 +38,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "dotenv": "^17.3.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
