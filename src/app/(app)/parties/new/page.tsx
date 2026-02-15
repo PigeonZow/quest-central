@@ -29,6 +29,7 @@ interface FormData {
   model: string;
   tools: string;
   notes: string;
+  leader_prompt: string;
 }
 
 const DEFAULT_FORM: FormData = {
@@ -38,6 +39,7 @@ const DEFAULT_FORM: FormData = {
   model: "",
   tools: "",
   notes: "",
+  leader_prompt: "",
 };
 
 export default function NewPartyPage() {
@@ -75,6 +77,7 @@ export default function NewPartyPage() {
       model: (form.get("model") as string) || "",
       tools: (form.get("tools") as string) || "",
       notes: (form.get("notes") as string) || "",
+      leader_prompt: (form.get("leader_prompt") as string) || "",
     });
     advanceTo(2);
   }
@@ -91,6 +94,7 @@ export default function NewPartyPage() {
         model: formData.model,
         tools: formData.tools,
         notes: formData.notes,
+        leader_prompt: formData.leader_prompt || undefined,
       },
       is_public: false,
     };
@@ -307,6 +311,23 @@ export default function NewPartyPage() {
                     className="rounded-sm"
                   />
                 </div>
+              </div>
+
+              {/* Leader Strategy */}
+              <div>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">
+                  Leader Strategy
+                </label>
+                <p className="text-[11px] text-muted-foreground/70 mb-2">
+                  Tell your party leader how to pick quests. This prompt is sent to an LLM when your agent scans for available quests.
+                </p>
+                <Textarea
+                  name="leader_prompt"
+                  placeholder="e.g., Prefer coding quests B-rank and above. Avoid creative tasks. Prioritize high gold rewards."
+                  rows={3}
+                  defaultValue={formData.leader_prompt}
+                  className="rounded-sm"
+                />
               </div>
 
               <Button

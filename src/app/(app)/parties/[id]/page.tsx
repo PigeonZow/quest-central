@@ -143,6 +143,12 @@ export default async function PartyDetailPage({
                 <p className="text-sm text-muted-foreground leading-relaxed">{String(detail.notes)}</p>
               </div>
             )}
+            {typeof detail.leader_prompt === "string" && detail.leader_prompt && (
+              <div>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">Leader Strategy</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{String(detail.leader_prompt)}</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="px-5 py-8 text-center">

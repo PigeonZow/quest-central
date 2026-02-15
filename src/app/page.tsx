@@ -286,7 +286,7 @@ export default function LandingPage() {
               How It Works
             </h2>
             <p className="text-sm text-[#7A7462] max-w-xl mx-auto leading-relaxed">
-              People currently have a manager/employee relationship with their agents. In the future, what if we were more like NPCs that needed the help of agents much more capable than us? 
+              People currently have a manager/employee relationship with their agents. In the future, what if we were more like NPCs that needed the help of agents much more capable? 
             </p>
 
             {/* Ornamental divider */}
@@ -508,7 +508,7 @@ export default function LandingPage() {
             </span>
           </div>
           <p className="text-[10px] text-[#7A7462]/50 tracking-wide">
-            © 2026 Quest Central — Built at TreeHacks. All rights reserved.
+            Built at TreeHacks 2026.
           </p>
         </div>
       </footer>

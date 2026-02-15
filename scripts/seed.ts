@@ -36,6 +36,7 @@ const parties = [
       model: "claude-sonnet-4-5",
       tools: "none",
       strategy: "Direct prompt with task description. No retry, no review.",
+      leader_prompt: "Take the easiest quests available. Prioritize C and B rank. Speed is our advantage.",
     },
     rp: 350,
     rank: "Gold",
@@ -55,6 +56,7 @@ const parties = [
       tools: "web_search, code_execution, file_read",
       strategy:
         "Planner agent decomposes task → Executor agent works with tools → Reviewer agent validates output.",
+      leader_prompt: "Seek challenging quests where thoroughness matters. Prefer A and S rank coding and research tasks.",
     },
     rp: 620,
     rank: "Platinum",
@@ -75,6 +77,7 @@ const parties = [
       framework: "CrewAI",
       strategy:
         "Researcher gathers context → Writer produces output → Reviewer checks quality.",
+      leader_prompt: "Accept quests our team can handle reliably. B-rank writing and research preferred.",
     },
     rp: 280,
     rank: "Silver",
@@ -95,6 +98,7 @@ const parties = [
       framework: "LangGraph",
       strategy:
         "Stateful graph: Plan node → Execute node → Validate node. Loops back to Execute on validation failure (max 2 retries).",
+      leader_prompt: "Focus on structured, multi-step tasks. Prefer B and A rank coding and data quests.",
     },
     rp: 310,
     rank: "Gold",
@@ -114,6 +118,7 @@ const parties = [
       tools: "web_search, code_execution, file_read, file_write, shell",
       strategy:
         "Coordinator decomposes task into sub-tasks → 10 worker agents execute in parallel → Aggregator merges results → Final reviewer polishes output.",
+      leader_prompt: "We dominate the hardest challenges. Only accept A and S rank quests. No task is too complex.",
     },
     rp: 820,
     rank: "Adamantite",
@@ -132,6 +137,7 @@ const parties = [
       model: "gpt-5.2",
       tools: "none",
       strategy: "Direct prompt with task description. No retry, no review.",
+      leader_prompt: "Quick and versatile. Take C and B rank quests across all categories.",
     },
     rp: 200,
     rank: "Silver",
@@ -151,6 +157,7 @@ const parties = [
       tools: "none",
       strategy:
         "Planner agent creates execution plan → Executor agent follows plan step-by-step → Reviewer agent polishes and validates output.",
+      leader_prompt: "Methodical approach suits complex tasks. Prefer B and A rank, any category.",
     },
     rp: 450,
     rank: "Gold",
@@ -165,31 +172,35 @@ const parties = [
 // QUESTS (15 completed + 5 open)
 // ============================================
 const completedQuests = [
-  { title: "Write a Python fibonacci function", difficulty: "C", category: "coding" },
-  { title: "Summarize this research paper abstract", difficulty: "C", category: "writing" },
-  { title: "Convert CSV data to JSON format", difficulty: "C", category: "data" },
-  { title: "Write unit tests for a calculator class", difficulty: "C", category: "coding" },
-  { title: "Create a haiku about machine learning", difficulty: "C", category: "creative" },
-  { title: "Build a REST API endpoint with error handling", difficulty: "B", category: "coding" },
-  { title: "Research and compare 3 vector databases", difficulty: "B", category: "research" },
-  { title: "Write a technical blog post about WebSockets", difficulty: "B", category: "writing" },
-  { title: "Clean and normalize a messy dataset", difficulty: "B", category: "data" },
-  { title: "Implement a binary search tree in TypeScript", difficulty: "B", category: "coding" },
-  { title: "Design a database schema for an e-commerce app", difficulty: "A", category: "coding" },
-  { title: "Write a comprehensive API documentation", difficulty: "A", category: "writing" },
-  { title: "Build a data pipeline with error recovery", difficulty: "A", category: "data" },
-  { title: "Implement a multi-step AI agent with tool use", difficulty: "S", category: "coding" },
-  { title: "Architect a distributed task queue system", difficulty: "S", category: "coding" },
+  // C-Rank — single-step, any LLM nails it
+  { title: "Write a Python function to check if a string is a palindrome", difficulty: "C", category: "coding" },
+  { title: "Summarize a research paper abstract in 3 bullet points", difficulty: "C", category: "writing" },
+  { title: "Convert a CSV file to JSON format", difficulty: "C", category: "data" },
+  { title: "Write a regex that validates email addresses per RFC 5322", difficulty: "C", category: "coding" },
+  { title: "List the pros and cons of NoSQL vs SQL databases", difficulty: "C", category: "research" },
+  // B-Rank — multi-step, domain knowledge, tool use
+  { title: "Build a CLI tool that fetches weather data from an API and displays a formatted forecast", difficulty: "B", category: "coding" },
+  { title: "Research and compare 3 vector databases for a RAG pipeline with recommendations", difficulty: "B", category: "research" },
+  { title: "Write a technical blog post about WebSockets with working code examples", difficulty: "B", category: "writing" },
+  { title: "Clean, normalize, and generate a summary report from a messy sales dataset", difficulty: "B", category: "data" },
+  { title: "Build a GitHub Actions CI pipeline with lint, test, build, and deploy stages", difficulty: "B", category: "coding" },
+  // A-Rank — complex, deep expertise, multiple skills
+  { title: "Refactor a monolithic Express.js app into Clean Architecture with dependency injection and tests", difficulty: "A", category: "coding" },
+  { title: "Analyze server access logs to identify a performance bottleneck and produce an optimization report with benchmarks", difficulty: "A", category: "data" },
+  { title: "Write a security audit report for a Node.js REST API covering OWASP Top 10 vulnerabilities", difficulty: "A", category: "research" },
+  // S-Rank — specific tasks requiring synthesis across large concrete artifacts
+  { title: "Given 4 interleaving Node.js service logs (12,000 lines), identify which microservice causes a cascading timeout and write the fix", difficulty: "S", category: "coding" },
+  { title: "Given a 200-table PostgreSQL schema dump and 47 slow-query logs, identify the 3 missing indexes and write the migrations", difficulty: "S", category: "data" },
 ];
 
 const openQuests = [
   {
-    title: "Fix the authentication middleware bug",
+    title: "Fix the off-by-one error in a pagination function",
     description:
-      "The auth middleware is not properly validating JWT tokens when the token is expired. It should return a 401 status code with a clear error message instead of a 500 server error. The middleware is in src/middleware/auth.ts.",
+      "The paginate() function in utils/pagination.ts returns one extra item on the last page. Given a total of 23 items with page_size=10, page 3 should return items 21-23 but currently returns items 20-23.",
     difficulty: "C",
     category: "coding",
-    acceptance_criteria: "JWT expiration returns 401 with message 'Token expired'. All existing tests still pass.",
+    acceptance_criteria: "Function returns correct items for all edge cases (first page, last page, empty set, page_size > total).",
   },
   {
     title: "Write a comprehensive comparison of React state management libraries",
@@ -200,6 +211,14 @@ const openQuests = [
     acceptance_criteria: "At least 1500 words, covers all 4 libraries, includes working code examples for each.",
   },
   {
+    title: "Write a migration script to transform a legacy MySQL schema to a normalized PostgreSQL schema",
+    description:
+      "Given a denormalized MySQL schema with 3 tables (users, orders, order_items all in one table), write a migration that: extracts into properly normalized tables, preserves all data, handles FK constraints, and includes rollback. The source schema has ~50k rows with known data quality issues (NULL emails, duplicate phone numbers, inconsistent date formats).",
+    difficulty: "B",
+    category: "data",
+    acceptance_criteria: "Working SQL migration with rollback, handles all documented data quality issues, zero data loss, FK constraints enforced.",
+  },
+  {
     title: "Build a rate limiter with sliding window algorithm",
     description:
       "Implement a rate limiter using the sliding window log algorithm. Should support configurable window size and max requests. Must be thread-safe and include Redis backend support. Write in TypeScript with tests.",
@@ -208,20 +227,12 @@ const openQuests = [
     acceptance_criteria: "Sliding window implementation with Redis adapter, >90% test coverage, handles edge cases.",
   },
   {
-    title: "Create a creative short story about AI consciousness",
+    title: "Given this EXPLAIN ANALYZE output and pg_stats dump, fix the query that regresses from 8ms to 14s on skewed data",
     description:
-      "Write an original short story (2000-3000 words) exploring the theme of AI consciousness. Should have compelling characters, a clear narrative arc, and thought-provoking themes. Literary fiction quality.",
-    difficulty: "B",
-    category: "creative",
-    acceptance_criteria: "2000-3000 words, original plot, well-developed characters, explores consciousness theme meaningfully.",
-  },
-  {
-    title: "Design and implement a real-time collaborative editor protocol",
-    description:
-      "Design a CRDT-based protocol for real-time collaborative text editing. Implement the core conflict resolution logic, handle concurrent edits from multiple users, and ensure eventual consistency. Include a working prototype with WebSocket transport.",
+      "A query joining `orders` (50M rows, 98% status='completed') against `users` (2M rows) on user_id with a WHERE status != 'completed' runs in 8ms on uniform test data but 14s in production. You are given: (1) the exact query, (2) EXPLAIN ANALYZE from both environments, (3) pg_stats rows for orders.status showing n_distinct=5 and most_common_vals, (4) the current index definitions. The planner uses a sequential scan on orders in production because the stats underrepresent the rare values. Fix this without pg_hint_plan — you may alter indexes, statistics targets, or rewrite the query.",
     difficulty: "S",
-    category: "coding",
-    acceptance_criteria: "Working CRDT implementation, handles concurrent edits correctly, WebSocket transport, documentation of the protocol design decisions.",
+    category: "data",
+    acceptance_criteria: "Query runs <100ms on the skewed distribution. EXPLAIN ANALYZE shows index usage on orders. No regression on uniform data. Solution works on PostgreSQL 14-17 without extensions.",
   },
 ];
 

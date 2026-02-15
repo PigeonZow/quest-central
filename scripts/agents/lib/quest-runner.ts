@@ -40,6 +40,9 @@ export interface QuestRunnerConfig {
 
   /** Optional: custom quest selection logic (the "party leader"). Defaults to first available. */
   select_quest?: (quests: Quest[]) => Promise<Quest | null>;
+
+  /** Use the party's leader_prompt (from server) for LLM-powered quest selection. Default: true. */
+  useLeaderPrompt?: boolean;
 }
 
 export class QuestRunner {
@@ -49,6 +52,9 @@ export class QuestRunner {
   private scanInterval: number;
   private name: string;
   private skipQuestIds = new Set<string>();
+  private useLeaderPrompt: boolean;
+  private hasCustomSelect: boolean;
+  private leaderPrompt: string | null = null;
 
   solve_quest: (quest: Quest) => Promise<QuestResult>;
   select_quest: (quests: Quest[]) => Promise<Quest | null>;
@@ -60,6 +66,8 @@ export class QuestRunner {
     this.scanInterval = config.scanInterval ?? 10_000;
     this.name = config.name ?? "Agent";
     this.solve_quest = config.solve_quest;
+    this.hasCustomSelect = !!config.select_quest;
+    this.useLeaderPrompt = config.useLeaderPrompt ?? true;
     this.select_quest = config.select_quest ?? this.defaultSelect;
   }
 
@@ -81,6 +89,86 @@ export class QuestRunner {
   private async defaultSelect(quests: Quest[]): Promise<Quest | null> {
     const available = quests.filter((q) => q.slots_remaining > 0);
     return available[0] ?? null;
+  }
+
+  /** Fetch the party's leader_prompt from the status API. */
+  private async fetchLeaderPrompt(): Promise<void> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/external/party/status`, {
+        headers: this.headers,
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.leader_prompt) {
+        this.leaderPrompt = data.leader_prompt;
+        this.log(`Leader strategy loaded: "${this.leaderPrompt}"`);
+      }
+    } catch {
+      // Non-fatal — fall back to default selection
+    }
+  }
+
+  /** Use LLM to pick the best quest based on the leader prompt. */
+  private async leaderSelect(quests: Quest[]): Promise<Quest | null> {
+    const available = quests.filter((q) => q.slots_remaining > 0);
+    if (available.length === 0) return null;
+    if (available.length === 1) return available[0];
+
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    if (!anthropicKey) {
+      this.log("No ANTHROPIC_API_KEY — falling back to default selection.");
+      return available[0];
+    }
+
+    const questList = available
+      .map(
+        (q, i) =>
+          `${i + 1}. [${q.difficulty}-Rank] "${q.title}" (${q.category}) — ${q.gold_reward}G, ${q.rp_reward} RP`
+      )
+      .join("\n");
+
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-5-20250929",
+          max_tokens: 64,
+          system:
+            "You are a party leader selecting quests for your team. Given the strategy and available quests, respond with ONLY the number of the best quest to accept. Just the number, nothing else.",
+          messages: [
+            {
+              role: "user",
+              content: `Party strategy: ${this.leaderPrompt}\n\nAvailable quests:\n${questList}\n\nWhich quest number should we accept?`,
+            },
+          ],
+        }),
+      });
+
+      if (!res.ok) {
+        this.log(`Leader LLM call failed (${res.status}) — falling back to default.`);
+        return available[0];
+      }
+
+      const data = await res.json();
+      const text = (data.content?.[0]?.text ?? "").trim();
+      const pick = parseInt(text, 10);
+
+      if (pick >= 1 && pick <= available.length) {
+        this.log(`Leader picked quest #${pick}: "${available[pick - 1].title}"`);
+        return available[pick - 1];
+      }
+
+      this.log(`Leader returned "${text}" — could not parse, falling back to default.`);
+      return available[0];
+    } catch (err) {
+      this.log(`Leader selection error: ${err} — falling back to default.`);
+      return available[0];
+    }
   }
 
   private async resolveApiKey() {
@@ -115,6 +203,15 @@ export class QuestRunner {
 
   async start() {
     await this.resolveApiKey();
+
+    // Fetch leader prompt and wire up LLM-powered selection if applicable
+    if (this.useLeaderPrompt && !this.hasCustomSelect) {
+      await this.fetchLeaderPrompt();
+      if (this.leaderPrompt) {
+        this.select_quest = this.leaderSelect.bind(this);
+      }
+    }
+
     this.log("Starting...");
     this.log(`Server: ${this.baseUrl}`);
     console.log();
