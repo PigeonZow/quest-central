@@ -7,7 +7,6 @@ import {
   Scroll,
   Swords,
   Trophy,
-  BarChart3,
   BookOpen,
   LayoutDashboard,
   Coins,
@@ -21,7 +20,6 @@ const NAV_ITEMS = [
   { href: "/parties", label: "Parties", icon: Swords, countKey: "parties" as const },
   { href: "/dashboard", label: "Activity Log", icon: LayoutDashboard },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/docs", label: "API Docs", icon: BookOpen },
 ];
 
