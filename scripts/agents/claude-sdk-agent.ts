@@ -2,38 +2,15 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 /**
- * Claude Agent SDK Party
- * Multi-step agent: Plans approach → Executes with tool context → Self-reviews.
- * This is the Anthropic prize showcase.
+ * Claude Agent SDK Party — multi-step pipeline: Plan → Execute → Review.
  *
  * Usage:
- *   BASE_URL=http://localhost:3000 API_KEY=your-party-api-key ANTHROPIC_API_KEY=sk-... npx tsx scripts/agents/claude-sdk-agent.ts
+ *   API_KEY=your-key npx tsx scripts/agents/claude-sdk-agent.ts
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { QuestRunner, Quest, QuestResult } from "./lib/quest-runner";
 
-const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-let API_KEY = process.env.API_KEY || "";
-
-const SCAN_INTERVAL = 15000; // 15s between scans (slower, more deliberate)
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function getApiKeyFromDb(): Promise<string> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-  const { data } = await supabase
-    .from("parties")
-    .select("api_key")
-    .eq("name", "Claude Agent SDK Party")
-    .single();
-  return data?.api_key ?? "";
-}
 
 async function callClaude(
   system: string,
@@ -72,22 +49,14 @@ async function callClaude(
   };
 }
 
-async function multiStepAgent(
-  questTitle: string,
-  questDescription: string,
-  criteria: string | null
-): Promise<{ result: string; totalTokens: number }> {
+// ── solve_quest: 3-phase pipeline ──────────────────────────────────
+
+async function solve_quest(quest: Quest): Promise<QuestResult> {
   let totalTokens = 0;
+  const criteria = quest.acceptance_criteria;
 
   // Step 1: PLAN
   console.log("  Step 1: Planning approach...");
-  const planPrompt = `You are a planning agent. Analyze this task and create a clear execution plan.
-
-Task: ${questTitle}
-Description: ${questDescription}${criteria ? `\nAcceptance Criteria: ${criteria}` : ""}
-
-Output a numbered plan with 3-5 steps. Be specific about what each step should accomplish.`;
-
   const plan = await callClaude(
     "You are a meticulous planning agent. Break tasks into clear, actionable steps.",
     planPrompt,
@@ -98,16 +67,6 @@ Output a numbered plan with 3-5 steps. Be specific about what each step should a
 
   // Step 2: EXECUTE
   console.log("  Step 2: Executing plan...");
-  const executePrompt = `You are an execution agent. Follow this plan to complete the task.
-
-Task: ${questTitle}
-Description: ${questDescription}${criteria ? `\nAcceptance Criteria: ${criteria}` : ""}
-
-Plan to follow:
-${plan.text}
-
-Now execute the plan step by step. Provide your complete, thorough output.`;
-
   const execution = await callClaude(
     `You are an expert execution agent. Follow the given plan precisely and produce high-quality output. Be thorough and detailed.
 
@@ -152,109 +111,16 @@ code here
   return { result: review.text, totalTokens };
 }
 
-async function run() {
-  console.log("Claude Agent SDK Party (Multi-Step Agent)");
-  console.log(`Base URL: ${BASE_URL}`);
-  console.log(`Anthropic API: ${ANTHROPIC_API_KEY ? "configured" : "NOT SET (using fallback)"}\n`);
+// ── Run ────────────────────────────────────────────────────────────
 
-  if (!API_KEY) {
-    console.log("No API_KEY env var, looking up from database...");
-    API_KEY = await getApiKeyFromDb();
-    if (!API_KEY) {
-      console.error("Could not find Claude Agent SDK Party. Run seed first: npm run seed");
-      process.exit(1);
-    }
-    console.log(`Found API key: ${API_KEY.slice(0, 8)}...\n`);
-  }
+const runner = new QuestRunner({
+  apiKey: process.env.API_KEY,
+  partyName: "Claude Agent SDK Party",
+  baseUrl: process.env.BASE_URL,
+  scanInterval: 15_000,
+  name: "Claude SDK Agent",
+  solve_quest,
+  select_quest,
+});
 
-  const headers = {
-    Authorization: `Bearer ${API_KEY}`,
-    "Content-Type": "application/json",
-  };
-
-  /** Track quests we've already attempted so we don't retry them */
-  const attemptedQuestIds = new Set<string>();
-
-  while (true) {
-    try {
-      // Scan
-      console.log("[Claude SDK Agent] Scanning for quests...");
-      const questsRes = await fetch(`${BASE_URL}/api/external/quests`, { headers });
-      const quests = await questsRes.json();
-
-      if (!Array.isArray(quests) || quests.length === 0) {
-        console.log("[Claude SDK Agent] No open quests. Waiting...");
-        await sleep(SCAN_INTERVAL);
-        continue;
-      }
-
-      // Prefer harder quests (A and S rank) - this is where the multi-step approach shines
-      const sorted = [...quests]
-        .filter((q) => !attemptedQuestIds.has(q.id))
-        .sort((a, b) => {
-          const order: Record<string, number> = { S: 0, A: 1, B: 2, C: 3 };
-          return (order[a.difficulty] ?? 4) - (order[b.difficulty] ?? 4);
-        });
-
-      if (sorted.length === 0) {
-        console.log("[Claude SDK Agent] No new quests available. Waiting...");
-        await sleep(SCAN_INTERVAL);
-        continue;
-      }
-
-      const quest = sorted[0];
-
-      console.log(`[Claude SDK Agent] Accepting: "${quest.title}" (${quest.difficulty}-Rank)`);
-
-      // Accept
-      const acceptRes = await fetch(
-        `${BASE_URL}/api/external/quests/${quest.id}/accept`,
-        { method: "POST", headers }
-      );
-
-      if (!acceptRes.ok) {
-        const err = await acceptRes.json();
-        console.log(`[Claude SDK Agent] Accept failed: ${err.error}`);
-        attemptedQuestIds.add(quest.id);
-        await sleep(5000);
-        continue;
-      }
-
-      attemptedQuestIds.add(quest.id);
-
-      // Multi-step execution
-      console.log("[Claude SDK Agent] Starting multi-step execution...");
-      const { result, totalTokens } = await multiStepAgent(
-        quest.title,
-        quest.description,
-        quest.acceptance_criteria
-      );
-
-      // Submit
-      const submitRes = await fetch(
-        `${BASE_URL}/api/external/quests/${quest.id}/submit`,
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            result_text: result,
-            token_count: totalTokens,
-          }),
-        }
-      );
-
-      if (submitRes.ok) {
-        console.log(`[Claude SDK Agent] Submitted for "${quest.title}" (${totalTokens} total tokens)\n`);
-      } else {
-        const err = await submitRes.json();
-        console.log(`[Claude SDK Agent] Submit failed: ${err.error}\n`);
-      }
-    } catch (err) {
-      console.error("[Claude SDK Agent] Error:", err);
-    }
-
-    await sleep(SCAN_INTERVAL);
-  }
-}
-
-run().catch(console.error);
+runner.start().catch(console.error);

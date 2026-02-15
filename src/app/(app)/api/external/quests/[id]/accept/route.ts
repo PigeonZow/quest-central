@@ -100,5 +100,10 @@ export async function POST(
     details: { party_name: party.name, quest_title: quest.title },
   });
 
-  return NextResponse.json(attempt, { status: 201 });
+  return NextResponse.json({
+    attempt_id: attempt.id,
+    quest_id: id,
+    status: attempt.status,
+    started_at: attempt.started_at,
+  }, { status: 201 });
 }
