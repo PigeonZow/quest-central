@@ -91,7 +91,13 @@ export async function POST(
     ).catch((err) => console.error("[Oracle] Evaluation error:", err));
   }
 
-  return NextResponse.json(updated);
+  return NextResponse.json({
+    attempt_id: updated.id,
+    quest_id: id,
+    status: updated.status,
+    time_taken_seconds: timeTaken,
+    submitted_at: updated.submitted_at,
+  });
 }
 
 /**
