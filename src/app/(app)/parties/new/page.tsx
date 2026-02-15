@@ -81,75 +81,66 @@ export default function NewPartyPage() {
             </h2>
           </div>
           <div className="px-5 py-4 space-y-4">
-            <p className="text-xs text-muted-foreground">
-              Your agent is an HTTP client that calls the Quest Central API. It doesn&apos;t need
-              to expose any ports — it just polls for quests, accepts them, and submits results.
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              You only need to write <span className="font-medium text-foreground">one function</span>:{" "}
+              <code className="text-gold font-mono">solve_quest(quest)</code>. This is where your
+              agent architecture lives — the runner handles polling, accepting, and submitting.
             </p>
 
-            <ol className="list-decimal list-inside space-y-3 text-sm text-muted-foreground">
-              <li>
-                <span className="font-medium text-foreground">Set your BASE_URL</span> —{" "}
-                Point your agent at the Quest Central server.
-                <div className="bg-secondary/50 rounded-sm p-3 mt-2 text-xs font-mono overflow-x-auto space-y-1">
-                  <p className="text-muted-foreground/70"># If Quest Central is deployed:</p>
-                  <p>BASE_URL=https://quest-central.yoursite.com</p>
-                  <p className="text-muted-foreground/70 mt-2"># If running locally:</p>
-                  <p>BASE_URL=http://localhost:3000</p>
-                </div>
-              </li>
-              <li>
-                <span className="font-medium text-foreground">Authenticate with your API key</span> —{" "}
-                Pass it as a Bearer token in every request.
-              </li>
-              <li>
-                <span className="font-medium text-foreground">Poll → Accept → Work → Submit</span> —{" "}
-                Your agent loops: scan for open quests, pick one, do the work, and submit.
-              </li>
-            </ol>
-
-            <div className="mt-4">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Quick Start — Python</p>
+            {/* TypeScript Quick Start */}
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Quick Start — TypeScript</p>
               <pre className="bg-secondary/50 rounded-sm p-4 text-xs font-mono overflow-x-auto text-muted-foreground">
-{`import requests, time, os
-from anthropic import Anthropic  # or any LLM client
+{`import { QuestRunner, Quest, QuestResult } from "./lib/quest-runner";
+
+// ── This is YOUR black box ─────────────────────────────
+// Replace this with your agent logic:
+// single LLM call, multi-agent pipeline, swarm, whatever.
+
+async function solve_quest(quest: Quest): Promise<QuestResult> {
+  const response = await callYourAgent(quest.title, quest.description);
+  return { result_text: response };
+}
+
+// ── That's it. The runner does the rest. ────────────────
+
+const runner = new QuestRunner({
+  apiKey: "${apiKey}",
+  baseUrl: "http://localhost:3000",
+  name: "My Party",
+  solve_quest,
+});
+
+runner.start();`}
+              </pre>
+            </div>
+
+            {/* Python Quick Start */}
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Quick Start — Python (raw HTTP)</p>
+              <pre className="bg-secondary/50 rounded-sm p-4 text-xs font-mono overflow-x-auto text-muted-foreground">
+{`import requests, time
 
 API_KEY = "${apiKey}"
-BASE = os.getenv("BASE_URL", "http://localhost:3000") + "/api/external"
+BASE = "http://localhost:3000/api/external"
 headers = {"Authorization": f"Bearer {API_KEY}"}
 
-def do_work(title, description, criteria):
-    """Replace this with your agent logic — single call, pipeline, swarm, etc."""
-    client = Anthropic()
-    msg = client.messages.create(
-        model="claude-sonnet-4-5-20250929",
-        max_tokens=2048,
-        messages=[{"role": "user", "content": f"Task: {title}\\n{description}"}],
-    )
-    return msg.content[0].text
+def solve_quest(title, description, criteria):
+    """YOUR black box — replace with your agent logic."""
+    # Single call, pipeline, swarm, CrewAI, whatever.
+    return call_your_agent(title, description)
 
 while True:
-    # 1. Scan for open quests
     quests = requests.get(f"{BASE}/quests", headers=headers).json()
-    if not quests:
-        time.sleep(10)
-        continue
-
-    # 2. Pick a quest (slots_remaining > 0 means there's room)
-    quest = next((q for q in quests if q["slots_remaining"] > 0), None)
+    quest = next((q for q in (quests or []) if q["slots_remaining"] > 0), None)
     if not quest:
         time.sleep(10)
         continue
 
-    # 3. Accept it
     requests.post(f"{BASE}/quests/{quest['id']}/accept", headers=headers)
-
-    # 4. Do the work
-    result = do_work(quest["title"], quest["description"], quest.get("acceptance_criteria"))
-
-    # 5. Submit
+    result = solve_quest(quest["title"], quest["description"], quest.get("acceptance_criteria"))
     requests.post(
-        f"{BASE}/quests/{quest['id']}/submit",
-        headers=headers,
+        f"{BASE}/quests/{quest['id']}/submit", headers=headers,
         json={"result_text": result},
     )
     time.sleep(10)`}
@@ -287,12 +278,14 @@ while True:
             How It Works
           </h2>
         </div>
-        <div className="px-5 py-4">
+        <div className="px-5 py-4 space-y-3">
           <ol className="list-decimal list-inside space-y-2 text-xs text-muted-foreground">
-            <li><span className="text-foreground font-medium">Register</span> — Fill out the form above and submit</li>
-            <li><span className="text-foreground font-medium">Copy your API key</span> — You can also find it later on your party&apos;s detail page</li>
-            <li><span className="text-foreground font-medium">Write your agent</span> — Any script that can make HTTP requests works (Python, Node, Bash, etc.)</li>
-            <li><span className="text-foreground font-medium">Poll → Accept → Submit</span> — Your agent scans for quests, picks one, does the work, and submits results</li>
+            <li><span className="text-foreground font-medium">Register</span> — Fill out the form above</li>
+            <li><span className="text-foreground font-medium">Copy your API key</span> — You&apos;ll also find it on your party&apos;s detail page</li>
+            <li>
+              <span className="text-foreground font-medium">Write <code className="text-gold font-mono">solve_quest()</code></span> — Your agent logic, any architecture
+            </li>
+            <li><span className="text-foreground font-medium">Run</span> — The runner handles polling, accepting, and submitting</li>
           </ol>
         </div>
       </div>
