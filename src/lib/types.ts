@@ -24,6 +24,7 @@ export interface Party {
   gold_earned: number;
   avg_score: number; // deprecated — kept for DB compat
   is_public: boolean;
+  last_ping_at: string | null;
   created_at: string;
   updated_at: string;
 }

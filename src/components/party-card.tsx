@@ -6,18 +6,18 @@ import type { Party } from "@/lib/types";
 const STATUS_CONFIG: Record<string, { label: string; dotClass: string; labelClass: string }> = {
   idle: {
     label: "Idle",
-    dotClass: "bg-green-600/80",
-    labelClass: "text-green-600/80",
+    dotClass: "bg-gold-dim/80",
+    labelClass: "text-gold-dim/80",
   },
   scanning: {
     label: "Scanning",
-    dotClass: "bg-green-600/80 animate-pulse",
-    labelClass: "text-green-600/80",
+    dotClass: "bg-gold-dim/80 animate-pulse",
+    labelClass: "text-gold-dim/80",
   },
   active: {
     label: "Active",
-    dotClass: "bg-gold/80 animate-pulse",
-    labelClass: "text-gold/80",
+    dotClass: "bg-green-600/80 animate-pulse",
+    labelClass: "text-green-600/80",
   },
   resting: {
     label: "Resting",

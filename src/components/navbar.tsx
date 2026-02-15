@@ -17,9 +17,9 @@ import { createClient } from "@/lib/supabase/client";
 import { DEMO_USER_ID, DEMO_USER_2_ID } from "@/lib/constants";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/quests", label: "Quests", icon: Scroll, countKey: "quests" as const },
   { href: "/parties", label: "Parties", icon: Swords, countKey: "parties" as const },
+  { href: "/dashboard", label: "Activity Log", icon: LayoutDashboard },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/docs", label: "API Docs", icon: BookOpen },

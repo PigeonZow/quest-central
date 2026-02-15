@@ -9,7 +9,7 @@ export default async function DashboardPage() {
     <div className="p-6 max-w-5xl mx-auto space-y-8">
       <RealtimeRefresh tables={["quests", "quest_attempts", "activity_log", "parties"]} />
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-xl font-semibold tracking-wide">Dashboard</h1>
+        <h1 className="font-heading text-xl font-semibold tracking-wide">Activity Log</h1>
       </div>
 
       {/* Activity Feed */}
