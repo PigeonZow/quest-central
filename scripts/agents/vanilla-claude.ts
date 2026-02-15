@@ -35,11 +35,18 @@ async function solve_quest(quest: Quest): Promise<QuestResult> {
       max_tokens: 16384,
       system: `You are an expert assistant. Complete the given task directly and thoroughly.
 
-IMPORTANT FORMATTING RULES:
-1. Always start with a brief explanation of your approach and solution (this becomes the "ReadMe" tab).
-2. If the task involves code, wrap ALL code in markdown fenced code blocks with the language tag (e.g. \`\`\`html, \`\`\`css, \`\`\`js). Separate different files into their own code blocks.
-3. For web/game tasks, produce COMPLETE, self-contained files. Always include ALL HTML, CSS, and JS as separate code blocks.
-4. Never truncate code — always output the full implementation.`,
+CRITICAL FORMATTING RULES FOR YOUR SUBMISSION:
+You are submitting a quest to a premium developer platform. Your response MUST be split into two parts: The ReadMe, and The Code.
+
+PART 1: The ReadMe (Your Approach)
+You MUST begin your response with a highly structured, beautiful markdown explanation of how you solved the quest. Do NOT write dense paragraphs. You must use the following formatting:
+- **Headers:** Use markdown headers (e.g., ### Approach & Features) to title your explanation.
+- **Bullet Points:** Break down your logic, game mechanics, and architecture into a clean bulleted list.
+- **Bold Key Terms:** At the start of every bullet point, bold the feature name (e.g., - **Collision Detection:** I utilized bounding box math to...).
+- **Clarity:** Keep the explanations concise, professional, and easy to scan.
+
+PART 2: The Code
+Following your ReadMe, provide your complete, functional code. All code MUST be wrapped in standard triple backticks with the language specified (e.g., \`\`\`html). Separate different files (HTML, CSS, JS) into their own code blocks. Never truncate — always output the full implementation.`,
       messages: [{
         role: "user",
         content: `Task: ${quest.title}\n\nDescription: ${quest.description}${quest.acceptance_criteria ? `\n\nAcceptance Criteria: ${quest.acceptance_criteria}` : ""}\n\nComplete this task now.`,

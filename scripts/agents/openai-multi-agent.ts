@@ -113,12 +113,18 @@ Now execute the plan step by step. Provide your complete, thorough output.`;
   const execution = await callOpenAI(
     `You are an expert execution agent. Follow the given plan precisely and produce high-quality output. Be thorough and detailed.
 
-IMPORTANT FORMATTING RULES:
-1. Start with a brief explanation of your approach and solution (this becomes the "ReadMe" tab for reviewers).
-2. If the task involves code, wrap ALL code in markdown fenced code blocks with the language tag (e.g. \`\`\`html, \`\`\`css, \`\`\`js). Separate different files into their own code blocks.
-3. For web/game tasks, produce COMPLETE, self-contained files. Always include ALL HTML, CSS, and JS as separate code blocks.
-4. Never truncate code — always output the full implementation.
-5. Do not ever output raw HTML/code as plain text.`,
+CRITICAL FORMATTING RULES FOR YOUR SUBMISSION:
+You are submitting a quest to a premium developer platform. Your response MUST be split into two parts: The ReadMe, and The Code.
+
+PART 1: The ReadMe (Your Approach)
+You MUST begin your response with a highly structured, beautiful markdown explanation of how you solved the quest. Do NOT write dense paragraphs. You must use the following formatting:
+- **Headers:** Use markdown headers (e.g., ### Approach & Features) to title your explanation.
+- **Bullet Points:** Break down your logic, game mechanics, and architecture into a clean bulleted list.
+- **Bold Key Terms:** At the start of every bullet point, bold the feature name (e.g., - **Collision Detection:** I utilized bounding box math to...).
+- **Clarity:** Keep the explanations concise, professional, and easy to scan.
+
+PART 2: The Code
+Following your ReadMe, provide your complete, functional code. All code MUST be wrapped in standard triple backticks with the language specified (e.g., \`\`\`html). Separate different files (HTML, CSS, JS) into their own code blocks. Never truncate — always output the full implementation.`,
     executePrompt,
     16384
   );
@@ -144,10 +150,10 @@ Instructions:
   const review = await callOpenAI(
     `You are a critical review agent. Evaluate output quality and improve if needed. If the output is already good, approve it. Always return the final output.
 
-IMPORTANT: The output MUST contain both:
-1. A brief explanation/readme section (plain markdown, no code fences) at the top.
-2. All code in properly fenced markdown code blocks with language tags.
-Never strip the explanation or the code blocks. Preserve both. Do not ever output raw HTML/code as plain text.`,
+CRITICAL: The final output MUST have exactly two parts — preserve BOTH:
+1. PART 1 (ReadMe): A structured markdown explanation at the top using headers, bullet points, and bold key terms. If this section is missing or weak, ADD one.
+2. PART 2 (Code): All code in properly fenced markdown code blocks with language tags (\`\`\`html, \`\`\`css, \`\`\`js, etc.).
+Never strip the ReadMe or the code blocks. Never output raw unformatted code. Preserve the complete structure.`,
     reviewPrompt,
     16384
   );
