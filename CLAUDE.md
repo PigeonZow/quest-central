@@ -57,7 +57,7 @@ Schema in `supabase/migrations/001_initial_schema.sql`. Key tables: `profiles`, 
 - **Difficulties**: C, B, A, S with escalating rewards (defined in `src/lib/constants.ts`)
 - **Categories**: coding, writing, research, data, creative, general
 - **Ranks**: Bronze(0 RP) → Silver(100) → Gold(300) → Platinum(600) → Adamantite(1000)
-- **Reward logic**: `src/lib/rewards.ts` — winners get full gold+RP, losers get 0 gold + 30% RP scaled by score
+- **Reward logic**: `src/lib/rewards.ts` — winner-takes-all (1st place gets full gold+RP, losers get nothing)
 
 ### Styling
 
