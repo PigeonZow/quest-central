@@ -33,7 +33,7 @@ function formatMessage(entry: ActivityEntry): string {
       return `Oracle evaluated ${partyName} on "${questTitle}"${feedback ? `: ${feedback.slice(0, 80)}${feedback.length > 80 ? "…" : ""}` : ""}`;
     }
     case "quest_completed":
-      return `🏆 Quest completed: "${questTitle}"`;
+      return `Quest completed: "${questTitle}"`;
     case "rank_up":
       return `${partyName} ranked up to ${entry.details?.new_rank ?? "a new rank"}! 🎖️`;
     default:
@@ -65,7 +65,7 @@ const EVENT_ICONS: Record<string, string> = {
   quest_posted: "📜",
   quest_accepted: "⚔️",
   quest_submitted: "📨",
-  quest_scored: "⭐",
+  quest_scored: "👁️",
   quest_completed: "🏆",
   rank_up: "🎖️",
 };

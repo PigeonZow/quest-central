@@ -419,7 +419,7 @@ export default function LandingPage() {
                   >
                     {/* Rank dot */}
                     <div
-                      className="w-3 h-3 rounded-full shrink-0"
+                      className="w-3 h-3 mr-2 rounded-full shrink-0"
                       style={{
                         backgroundColor: tier.color,
                         boxShadow: `0 0 10px ${tier.color}40`,
