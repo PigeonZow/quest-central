@@ -199,6 +199,25 @@
   box-shadow: 0 0 16px rgba(200, 168, 78, 0.04);
 }
 
+/* Active party glow — Elden Ring selection border */
+@keyframes active-glow {
+  0%, 100% { opacity: 0; }
+  50%      { opacity: 1; }
+}
+.quest-card-active {
+  position: relative;
+}
+.quest-card-active::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid rgba(200, 168, 78, 0.4);
+  box-shadow: 0 0 18px rgba(200, 168, 78, 0.1), 0 0 40px rgba(200, 168, 78, 0.05), inset 0 0 12px rgba(200, 168, 78, 0.04);
+  pointer-events: none;
+  animation: active-glow 3.5s ease-in-out infinite;
+}
+
 /* RPG golden glow — Elden Ring menu style. Apply to an inline/text element. */
 .glow-text {
   position: relative;

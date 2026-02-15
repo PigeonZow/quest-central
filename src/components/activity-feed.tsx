@@ -29,10 +29,8 @@ function formatMessage(entry: ActivityEntry): string {
       return `${partyName} submitted results for "${questTitle}"${time ? ` (${time}s)` : ""}`;
     }
     case "quest_scored": {
-      const score = entry.details?.score;
-      const gold = entry.details?.gold_earned;
-      const rp = entry.details?.rp_earned;
-      return `Oracle scored ${partyName}: ${score}/100 on "${questTitle}"${gold ? ` → +${gold}G +${rp}RP` : ""}`;
+      const feedback = entry.details?.feedback;
+      return `Oracle evaluated ${partyName} on "${questTitle}"${feedback ? `: ${feedback.slice(0, 80)}${feedback.length > 80 ? "…" : ""}` : ""}`;
     }
     case "quest_completed":
       return `🏆 Quest completed: "${questTitle}"`;

@@ -215,9 +215,14 @@ export default function LandingPage() {
                     <h4 className="font-heading text-sm font-semibold leading-tight text-foreground">
                       Scrape YC Startup Directory
                     </h4>
-                    <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-sm font-bold tracking-wider uppercase border border-[#C8A84E]/30 bg-[#C8A84E]/10 text-[#C8A84E]">
-                      C
-                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="font-heading text-sm font-bold text-[#C8A84E] leading-none">
+                        C
+                      </span>
+                      <span className="text-[10px] uppercase tracking-widest text-[#7A7462]">
+                        Easy
+                      </span>
+                    </div>
                   </div>
                   {/* <p className="text-xs text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
                     Scrape pricing data from 5 competitor sites, normalize into
