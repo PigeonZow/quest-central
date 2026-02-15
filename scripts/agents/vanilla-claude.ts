@@ -56,7 +56,11 @@ async function callClaude(questTitle: string, questDescription: string, criteria
     return `## Vanilla Claude Response\n\nI've analyzed the task "${questTitle}" and here's my direct response:\n\n${questDescription}\n\nThis was completed in a single API call with no planning or review steps. Simple and direct.`;
   }
 
-  const systemPrompt = "You are an expert assistant. Complete the given task directly and thoroughly. Be concise but comprehensive.";
+  const systemPrompt = `You are an expert assistant. Complete the given task directly and thoroughly. Be concise but comprehensive.
+
+CRITICAL: If your response includes ANY code (HTML, CSS, JS, Python, etc.), you MUST wrap the code entirely in standard markdown code blocks with the language specified (e.g., \`\`\`html
+code here
+\`\`\`). Do not ever output raw HTML/code as plain text.`;
   const userPrompt = `Task: ${questTitle}\n\nDescription: ${questDescription}${criteria ? `\n\nAcceptance Criteria: ${criteria}` : ""}\n\nComplete this task now. Provide your full response.`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {

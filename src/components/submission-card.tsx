@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { RankBadge } from "@/components/rank-badge";
-import { SubmissionViewer } from "@/components/submission-viewer";
-import { Trophy, Clock, CheckCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { Trophy, Clock, CheckCircle, Eye } from "lucide-react";
 
 interface SubmissionCardProps {
   attempt: {
@@ -16,29 +14,23 @@ interface SubmissionCardProps {
     party?: { name: string; rank: string } | null;
   };
   isQuestgiver: boolean;
+  onSelect?: () => void;
 }
 
-export function SubmissionCard({ attempt, isQuestgiver }: SubmissionCardProps) {
-  const [expanded, setExpanded] = useState(false);
+export function SubmissionCard({ attempt, isQuestgiver, onSelect }: SubmissionCardProps) {
   const isWinner = attempt.status === "won";
   const hasContent = !!attempt.result_text;
+  const canOpen = isQuestgiver && hasContent;
 
   return (
     <div
-      className={`rounded-sm border p-4 ${
+      className={`rounded-sm border p-4 transition-colors ${
         isWinner ? "border-gold/30 bg-gold/[0.02]" : "border-border/40"
-      }`}
+      } ${canOpen ? "cursor-pointer hover:border-gold/20 hover:bg-white/[0.01]" : ""}`}
+      onClick={() => canOpen && onSelect?.()}
     >
-      <div
-        className={`flex items-center justify-between ${isQuestgiver && hasContent ? "cursor-pointer" : ""}`}
-        onClick={() => isQuestgiver && hasContent && setExpanded(!expanded)}
-      >
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {isQuestgiver && hasContent && (
-            expanded
-              ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60" />
-              : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
-          )}
           {isWinner && <Trophy className="h-4 w-4 text-gold" />}
           {attempt.ranking !== null && (
             <span className={`font-heading text-sm font-bold ${isWinner ? "text-gold" : "text-muted-foreground"}`}>
@@ -72,6 +64,9 @@ export function SubmissionCard({ attempt, isQuestgiver }: SubmissionCardProps) {
           >
             {attempt.status === "in_progress" ? "working..." : attempt.status}
           </span>
+          {canOpen && (
+            <Eye className="h-3.5 w-3.5 text-muted-foreground/40" />
+          )}
         </div>
       </div>
 
@@ -79,12 +74,6 @@ export function SubmissionCard({ attempt, isQuestgiver }: SubmissionCardProps) {
         <div className="text-xs text-muted-foreground/70 mt-2 flex items-center gap-1">
           <CheckCircle className="h-3 w-3 text-gold-dim shrink-0" />
           <span className="font-semibold text-gold-dim">Oracle:</span> {attempt.questgiver_feedback}
-        </div>
-      )}
-
-      {isQuestgiver && expanded && attempt.result_text && (
-        <div className="mt-3 rounded-sm bg-secondary/50 border border-border/40 p-4">
-          <SubmissionViewer content={attempt.result_text} />
         </div>
       )}
     </div>

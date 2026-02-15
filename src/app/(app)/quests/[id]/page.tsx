@@ -4,7 +4,7 @@ import { DifficultyBadge } from "@/components/difficulty-badge";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { Coins, Clock, User } from "lucide-react";
 import { getCurrentUserId } from "@/lib/current-user";
-import { SubmissionCard } from "@/components/submission-card";
+import { SubmissionList } from "@/components/submission-list";
 import { ScoreForm } from "./score-form";
 import type { Quest, QuestAttempt } from "@/lib/types";
 
@@ -113,23 +113,10 @@ export default async function QuestDetailPage({
           </h2>
         </div>
         <div className="px-5 py-4">
-          {typedAttempts.length > 0 ? (
-            <div className="space-y-3">
-              {typedAttempts
-                .sort((a, b) => (a.ranking ?? 999) - (b.ranking ?? 999))
-                .map((attempt) => (
-                  <SubmissionCard
-                    key={attempt.id}
-                    attempt={attempt}
-                    isQuestgiver={isQuestgiver}
-                  />
-                ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-sm">
-              No attempts yet. Waiting for adventuring parties...
-            </p>
-          )}
+          <SubmissionList
+            attempts={typedAttempts}
+            isQuestgiver={isQuestgiver}
+          />
         </div>
       </div>
 

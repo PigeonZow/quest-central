@@ -23,9 +23,40 @@ import {
    Utilities
    ═══════════════════════════════════════════════════════════ */
 
-/** Detect if a string contains fenced code blocks */
+/** Detect if a string contains fenced code blocks OR raw HTML */
 function hasCodeBlocks(text: string): boolean {
-  return /```[\s\S]*?```/.test(text);
+  return /```[\s\S]*?```/.test(text) || /<!DOCTYPE\s+html>/i.test(text);
+}
+
+/**
+ * Normalize raw code in a submission string.
+ * If the text contains raw HTML (<!DOCTYPE html>) without code fences,
+ * wrap the HTML block in ```html fences so downstream parsers handle it.
+ */
+function normalizeCodeFences(text: string): string {
+  // Already has proper fences — no fixup needed
+  if (/```[\s\S]*?```/.test(text)) return text;
+
+  // Detect raw HTML document and wrap it
+  const doctypeMatch = text.match(/(<!DOCTYPE\s+html>[\s\S]*)/i);
+  if (doctypeMatch) {
+    const beforeHtml = text.slice(0, doctypeMatch.index).trimEnd();
+    const htmlBlock = doctypeMatch[1].trimEnd();
+    return `${beforeHtml}\n\n\`\`\`html\n${htmlBlock}\n\`\`\``;
+  }
+
+  return text;
+}
+
+/**
+ * Strip fenced code blocks from markdown, leaving only prose content.
+ * Also removes heading lines that are filenames immediately preceding a code block.
+ */
+function stripCodeBlocks(text: string): string {
+  return text
+    .replace(/(?:^###?\s+\S+\.[\w]+\s*\n)?```[\s\S]*?```/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 interface ParsedFile {
@@ -238,12 +269,12 @@ function CodeBadge() {
    MiniIDE — File Explorer + Code Viewer
    ═══════════════════════════════════════════════════════════ */
 
-function MiniIDE({ files }: { files: ParsedFile[] }) {
+function MiniIDE({ files, fillHeight }: { files: ParsedFile[]; fillHeight?: boolean }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const active = files[activeIndex];
 
   return (
-    <div className="mt-3 flex h-[500px] overflow-hidden rounded-sm border border-slate-700 bg-[#0a0a09]">
+    <div className={`mt-3 flex overflow-hidden rounded-sm border border-slate-700 bg-[#0a0a09] ${fillHeight ? "flex-1 min-h-0" : "h-[500px]"}`}>
       {/* ── File Tree Sidebar ── */}
       <div className="flex w-48 shrink-0 flex-col border-r border-slate-700/60 bg-[#08080a]">
         {/* Sidebar header */}
@@ -336,38 +367,56 @@ function MiniIDE({ files }: { files: ParsedFile[] }) {
 
 interface SubmissionViewerProps {
   content: string;
+  /** When true, the viewer stretches to fill its parent via flex instead of using fixed heights */
+  fillHeight?: boolean;
 }
 
-export function SubmissionViewer({ content }: SubmissionViewerProps) {
+export function SubmissionViewer({ content, fillHeight }: SubmissionViewerProps) {
   const containsCode = useMemo(() => hasCodeBlocks(content), [content]);
-  const files = useMemo(
-    () => (containsCode ? parseFiles(content) : []),
+  // Normalize raw HTML into fenced code blocks before any parsing
+  const normalized = useMemo(
+    () => (containsCode ? normalizeCodeFences(content) : content),
     [content, containsCode],
   );
+  const files = useMemo(
+    () => (containsCode ? parseFiles(normalized) : []),
+    [normalized, containsCode],
+  );
   const canPreview = useMemo(() => isPreviewable(files), [files]);
+  const readmeContent = useMemo(
+    () => (containsCode ? stripCodeBlocks(normalized) : content),
+    [normalized, content, containsCode],
+  );
 
   /* ── Simple markdown-only view ── */
   if (!containsCode) {
     return (
-      <div className="prose prose-invert prose-sm max-w-none prose-headings:font-heading prose-headings:text-gold prose-strong:text-foreground prose-a:text-gold prose-code:text-gold-bright prose-code:bg-secondary prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-[#0d0d0d] prose-pre:border prose-pre:border-border/40">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <div className={`overflow-y-auto scrollbar-dark ${fillHeight ? "flex-1 min-h-0" : ""}`}>
+        <div className="prose prose-invert prose-sm max-w-none prose-headings:font-heading prose-headings:text-gold prose-strong:text-foreground prose-a:text-gold prose-code:text-gold-bright prose-code:bg-secondary prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-[#0d0d0d] prose-pre:border prose-pre:border-border/40">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        </div>
       </div>
     );
   }
 
+  /* Height classes: fixed for inline, flex for modal */
+  const containerH = fillHeight ? "flex-1 min-h-0" : "h-[500px]";
+
   /* ── Tabbed view when code is detected ── */
   return (
-    <div>
-      {/* Badge */}
-      <div className="mb-3 flex items-center gap-2">
-        <span className="text-xs font-heading text-muted-foreground uppercase tracking-wider">
-          Submission Result
-        </span>
-        <CodeBadge />
-      </div>
+    <div className={fillHeight ? "flex flex-col flex-1 min-h-0" : ""}>
+      {/* Badge — only show inline (modal has its own badge in header) */}
+      {!fillHeight && (
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-xs font-heading text-muted-foreground uppercase tracking-wider">
+            Submission Result
+          </span>
+          <CodeBadge />
+        </div>
+      )}
 
-      <Tabs defaultValue="readme">
-        <TabsList className="bg-secondary/60 border border-border/40">
+      <Tabs defaultValue="readme" className={fillHeight ? "flex flex-col flex-1 min-h-0" : ""}>
+        <TabsList className="bg-secondary/60 border border-border/40 shrink-0">
           <TabsTrigger value="readme" className="gap-1.5 text-xs">
             <FileText className="h-3 w-3" /> ReadMe
           </TabsTrigger>
@@ -382,24 +431,24 @@ export function SubmissionViewer({ content }: SubmissionViewerProps) {
         </TabsList>
 
         {/* ── ReadMe Tab ── */}
-        <TabsContent value="readme">
-          <div className="mt-3 h-[500px] overflow-y-auto rounded-sm border border-slate-700 bg-[#0d0d0d] p-4 scrollbar-dark">
+        <TabsContent value="readme" className={fillHeight ? "flex flex-col flex-1 min-h-0" : ""}>
+          <div className={`mt-3 overflow-y-auto rounded-sm border border-slate-700 bg-[#0d0d0d] p-4 scrollbar-dark ${containerH}`}>
             <div className="prose prose-invert prose-sm max-w-none prose-headings:font-heading prose-headings:text-gold prose-strong:text-foreground prose-a:text-gold prose-code:text-gold-bright prose-code:bg-secondary prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-secondary/50 prose-pre:border prose-pre:border-border/40">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{readmeContent}</ReactMarkdown>
             </div>
           </div>
         </TabsContent>
 
         {/* ── View Code Tab (Mini IDE) ── */}
-        <TabsContent value="code">
-          <MiniIDE files={files} />
+        <TabsContent value="code" className={fillHeight ? "flex flex-col flex-1 min-h-0" : ""}>
+          <MiniIDE files={files} fillHeight={fillHeight} />
         </TabsContent>
 
         {/* ── Live Preview Tab ── */}
         {canPreview && (
-          <TabsContent value="preview">
-            <div className="mt-3 overflow-hidden rounded-sm border border-slate-700 bg-[#0d0d0d]">
-              <div className="flex items-center border-b border-slate-700 bg-secondary/40 px-4 py-2">
+          <TabsContent value="preview" className={fillHeight ? "flex flex-col flex-1 min-h-0" : ""}>
+            <div className={`mt-3 overflow-hidden rounded-sm border border-slate-700 bg-[#0d0d0d] ${fillHeight ? "flex flex-col flex-1 min-h-0" : ""}`}>
+              <div className="flex items-center border-b border-slate-700 bg-secondary/40 px-4 py-2 shrink-0">
                 <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                   Live Preview
                 </span>
@@ -408,7 +457,7 @@ export function SubmissionViewer({ content }: SubmissionViewerProps) {
                 srcDoc={buildPreviewHtml(files)}
                 sandbox="allow-scripts"
                 title="Submission Preview"
-                className="h-[500px] w-full border-0 bg-[#1a1a17]"
+                className={`w-full border-0 bg-[#1a1a17] ${fillHeight ? "flex-1 min-h-0" : "h-[500px]"}`}
               />
             </div>
           </TabsContent>

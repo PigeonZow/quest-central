@@ -91,7 +91,7 @@ Output a numbered plan with 3-5 steps. Be specific about what each step should a
   const plan = await callClaude(
     "You are a meticulous planning agent. Break tasks into clear, actionable steps.",
     planPrompt,
-    1024
+    2048
   );
   totalTokens += plan.tokens;
   console.log(`  Plan created (${plan.tokens} tokens)`);
@@ -109,7 +109,11 @@ ${plan.text}
 Now execute the plan step by step. Provide your complete, thorough output.`;
 
   const execution = await callClaude(
-    "You are an expert execution agent. Follow the given plan precisely and produce high-quality output. Be thorough and detailed.",
+    `You are an expert execution agent. Follow the given plan precisely and produce high-quality output. Be thorough and detailed.
+
+CRITICAL: If your response includes ANY code (HTML, CSS, JS, Python, etc.), you MUST wrap the code entirely in standard markdown code blocks with the language specified (e.g., \`\`\`html
+code here
+\`\`\`). Do not ever output raw HTML/code as plain text.`,
     executePrompt,
     8192
   );
@@ -133,7 +137,11 @@ Instructions:
 - Do NOT wrap the output in extra headings like "Final Version" or "Improved Version" — just output the work itself.`;
 
   const review = await callClaude(
-    "You are a quality-assurance agent. Output ONLY the final polished deliverable. No commentary, no review notes, no meta-text. Your entire response will be submitted directly as the quest result.",
+    `You are a critical review agent. Evaluate output quality and improve if needed. If the output is already good, approve it. Always return the final output.
+
+CRITICAL: If the output includes ANY code (HTML, CSS, JS, Python, etc.), you MUST preserve it in standard markdown code blocks with the language specified (e.g., \`\`\`html
+code here
+\`\`\`). Do not ever output raw HTML/code as plain text.`,
     reviewPrompt,
     8192
   );

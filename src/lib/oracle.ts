@@ -73,21 +73,37 @@ export async function rankAttempts(
 /**
  * Classify a quest's difficulty as C/B/A/S based on its description.
  * Used when a quest is posted to auto-assign difficulty.
+ * @deprecated Use classifyQuest instead which also returns category.
  */
 export async function classifyDifficulty(
   title: string,
   description: string,
   acceptanceCriteria: string | null
 ): Promise<{ difficulty: "C" | "B" | "A" | "S"; reasoning: string }> {
+  const result = await classifyQuest(title, description, acceptanceCriteria);
+  return { difficulty: result.difficulty, reasoning: result.reasoning };
+}
+
+export type QuestCategory = "coding" | "writing" | "research" | "data" | "creative" | "general";
+
+/**
+ * Classify a quest's difficulty AND category based on its description.
+ * Used when a quest is posted to auto-assign both fields.
+ */
+export async function classifyQuest(
+  title: string,
+  description: string,
+  acceptanceCriteria: string | null
+): Promise<{ difficulty: "C" | "B" | "A" | "S"; category: QuestCategory; reasoning: string }> {
   if (!OPENAI_API_KEY) {
-    return heuristicDifficulty(description, acceptanceCriteria);
+    return heuristicClassifyQuest(description, acceptanceCriteria);
   }
 
   try {
-    return await llmClassifyDifficulty(title, description, acceptanceCriteria);
+    return await llmClassifyQuest(title, description, acceptanceCriteria);
   } catch (err) {
-    console.error("[Oracle] GPT-4o difficulty classification failed, using heuristic:", err);
-    return heuristicDifficulty(description, acceptanceCriteria);
+    console.error("[Oracle] GPT-4o quest classification failed, using heuristic:", err);
+    return heuristicClassifyQuest(description, acceptanceCriteria);
   }
 }
 
@@ -169,28 +185,40 @@ Rank these submissions from best to worst.`;
   return finalOrder.map((id) => ({ id }));
 }
 
-async function llmClassifyDifficulty(
+const VALID_CATEGORIES: QuestCategory[] = ["coding", "writing", "research", "data", "creative", "general"];
+
+async function llmClassifyQuest(
   title: string,
   description: string,
   criteria: string | null
-): Promise<{ difficulty: "C" | "B" | "A" | "S"; reasoning: string }> {
+): Promise<{ difficulty: "C" | "B" | "A" | "S"; category: QuestCategory; reasoning: string }> {
   const systemPrompt = `You are the Oracle — an impartial judge for Quest Central, an AI agent orchestration marketplace.
 
-Classify this quest's difficulty for AI Agents:
+Analyze this quest and classify BOTH its difficulty and category.
+
+Difficulty levels for AI Agents:
 - C-Rank (Easy): An LLM Agent should be able to do this pretty consistently.
 - B-Rank (Medium): Multi-step tasks requiring moderate effort. Some domain knowledge or tool use.
 - A-Rank (Hard): Complex tasks requiring significant effort, multiple skills, or deep domain/human expertise.
 - S-Rank (Legendary): Extremely challenging tasks requiring exceptional skill, creativity, or extensive multi-step work. You are not sure if LLMs are even capable of solving this task.
 
+Categories (choose exactly one):
+- coding: Programming, debugging, building apps, writing scripts, implementing algorithms
+- writing: Essays, articles, documentation, copywriting, storytelling, emails
+- research: Information gathering, analysis, fact-finding, literature review, summarization
+- data: Data analysis, visualization, spreadsheets, SQL, statistics, data cleaning
+- creative: Design, art direction, brainstorming, creative concepts, music, visual media
+- general: Tasks that don't fit neatly into the above categories
+
 IMPORTANT: Respond ONLY with valid JSON:
-{"difficulty": "C"|"B"|"A"|"S", "reasoning": "<one sentence explanation>"}`;
+{"difficulty": "C"|"B"|"A"|"S", "category": "coding"|"writing"|"research"|"data"|"creative"|"general", "reasoning": "<one sentence explanation>"}`;
 
   const userPrompt = `## Quest
 **Title:** ${title}
 **Description:** ${description}
 ${criteria ? `**Acceptance Criteria:** ${criteria}` : ""}
 
-Classify this quest's difficulty.`;
+Classify this quest's difficulty and category.`;
 
   const text = await callOpenAI(systemPrompt, userPrompt);
   const jsonMatch = text.match(/\{[\s\S]*?\}/);
@@ -198,7 +226,8 @@ Classify this quest's difficulty.`;
 
   const parsed = JSON.parse(jsonMatch[0]);
   const difficulty = ["C", "B", "A", "S"].includes(parsed.difficulty) ? parsed.difficulty : "C";
-  return { difficulty, reasoning: parsed.reasoning || "Classified by Oracle." };
+  const category: QuestCategory = VALID_CATEGORIES.includes(parsed.category) ? parsed.category : "general";
+  return { difficulty, category, reasoning: parsed.reasoning || "Classified by Oracle." };
 }
 
 // ─── OpenAI Chat Completions API ───
@@ -246,18 +275,35 @@ function heuristicEvaluate(resultText: string): OracleEvaluation {
   return { feedback: "Brief response provided. Configure OPENAI_API_KEY for detailed evaluation." };
 }
 
-function heuristicDifficulty(
+function heuristicClassifyQuest(
   description: string,
   criteria: string | null
-): { difficulty: "C" | "B" | "A" | "S"; reasoning: string } {
+): { difficulty: "C" | "B" | "A" | "S"; category: QuestCategory; reasoning: string } {
   const len = description.length + (criteria?.length ?? 0);
   let difficulty: "C" | "B" | "A" | "S" = "C";
   if (len > 2000) difficulty = "S";
   else if (len > 1000) difficulty = "A";
   else if (len > 400) difficulty = "B";
 
+  // Simple keyword-based category detection
+  const text = (description + " " + (criteria ?? "")).toLowerCase();
+  let category: QuestCategory = "general";
+
+  const codingKeywords = /\b(code|program|function|api|bug|debug|implement|script|algorithm|html|css|javascript|python|react|database|sql|deploy|build an? app|software|endpoint)\b/;
+  const writingKeywords = /\b(write|essay|article|blog|copy|documentation|email|letter|story|narrative|content|draft)\b/;
+  const researchKeywords = /\b(research|analyze|investigate|find out|summarize|compare|review|study|literature|survey)\b/;
+  const dataKeywords = /\b(data|csv|spreadsheet|visualization|chart|graph|statistics|analytics|dataset|clean data|sql query)\b/;
+  const creativeKeywords = /\b(design|creative|brainstorm|logo|artwork|music|visual|brand|concept art|ui\/ux|mockup)\b/;
+
+  if (codingKeywords.test(text)) category = "coding";
+  else if (dataKeywords.test(text)) category = "data";
+  else if (researchKeywords.test(text)) category = "research";
+  else if (writingKeywords.test(text)) category = "writing";
+  else if (creativeKeywords.test(text)) category = "creative";
+
   return {
     difficulty,
+    category,
     reasoning: `Classified by heuristic (${len} chars). Configure OPENAI_API_KEY for Oracle-powered classification.`,
   };
 }
