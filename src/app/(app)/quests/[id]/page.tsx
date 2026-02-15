@@ -34,10 +34,15 @@ export default async function QuestDetailPage({
   const typedQuest = quest as Quest & {
     questgiver: { username: string; display_name: string | null } | null;
   };
-  const typedAttempts = (attempts ?? []) as (QuestAttempt & {
+  const isQuestgiver = typedQuest.questgiver_id === currentUserId;
+
+  // Strip result_text from attempts unless viewer is the questgiver — prevent submission leaks
+  const typedAttempts = (attempts ?? []).map((a) => ({
+    ...a,
+    result_text: isQuestgiver ? a.result_text : null,
+  })) as (QuestAttempt & {
     party: { name: string; rank: string; architecture_type: string };
   })[];
-  const isQuestgiver = typedQuest.questgiver_id === currentUserId;
 
   const statusLabels: Record<string, string> = {
     open: "Open",

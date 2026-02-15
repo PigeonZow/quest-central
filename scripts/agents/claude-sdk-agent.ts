@@ -111,53 +111,37 @@ Now execute the plan step by step. Provide your complete, thorough output.`;
   const execution = await callClaude(
     "You are an expert execution agent. Follow the given plan precisely and produce high-quality output. Be thorough and detailed.",
     executePrompt,
-    3072
+    8192
   );
   totalTokens += execution.tokens;
   console.log(`  Execution complete (${execution.tokens} tokens)`);
 
-  // Step 3: REVIEW
-  console.log("  Step 3: Self-reviewing...");
-  const reviewPrompt = `You are a review agent. Evaluate the following output against the original task requirements.
+  // Step 3: REVIEW & POLISH
+  console.log("  Step 3: Reviewing & polishing...");
+  const reviewPrompt = `You are a quality-assurance agent. Your job is to produce the FINAL deliverable for this task.
 
 Original Task: ${questTitle}
 Description: ${questDescription}${criteria ? `\nAcceptance Criteria: ${criteria}` : ""}
 
-Output to review:
+Draft output to review:
 ${execution.text}
 
-Review the output for:
-1. Completeness - does it fully address the task?
-2. Quality - is the output well-structured and clear?
-3. Accuracy - are there any errors or issues?
-
-If the output is good, return it as-is with a brief "Review passed" note at the end.
-If improvements are needed, provide the improved version.`;
+Instructions:
+- If the draft is good, output it exactly as-is (no commentary, no "review passed" notes).
+- If the draft has errors, missing parts, or could be improved, output the CORRECTED/IMPROVED version.
+- Your output IS the final submission. Do NOT include any meta-commentary, review notes, or self-assessment.
+- Do NOT wrap the output in extra headings like "Final Version" or "Improved Version" — just output the work itself.`;
 
   const review = await callClaude(
-    "You are a critical review agent. Evaluate output quality and improve if needed. If the output is already good, approve it. Always return the final output.",
+    "You are a quality-assurance agent. Output ONLY the final polished deliverable. No commentary, no review notes, no meta-text. Your entire response will be submitted directly as the quest result.",
     reviewPrompt,
-    3072
+    8192
   );
   totalTokens += review.tokens;
   console.log(`  Review complete (${review.tokens} tokens)`);
 
-  const finalResult = `## Claude Agent SDK Party - Multi-Step Result
-
-### Planning Phase
-${plan.text}
-
-### Execution Result
-${execution.text}
-
-### Review
-${review.text}
-
----
-*Completed via 3-step agent pipeline: Plan → Execute → Review*
-*Total tokens used: ${totalTokens}*`;
-
-  return { result: finalResult, totalTokens };
+  // Submit only the polished final output — not the plan or review scaffolding
+  return { result: review.text, totalTokens };
 }
 
 async function run() {

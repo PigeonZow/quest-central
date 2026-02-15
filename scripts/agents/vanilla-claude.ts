@@ -68,7 +68,7 @@ async function callClaude(questTitle: string, questDescription: string, criteria
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-5-20250929",
-      max_tokens: 2048,
+      max_tokens: 8192,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
     }),
