@@ -107,7 +107,7 @@ export function CompareModal({ left, right, onClose }: CompareModalProps) {
 
           {/* Modal container */}
           <motion.div
-            className="relative flex h-[90vh] w-[95vw] max-w-[1600px] flex-col overflow-hidden rounded-xl border border-slate-700 bg-[#0e0e0c] shadow-2xl shadow-black/60"
+            className="relative flex h-[90vh] w-[95vw] max-w-[1600px] flex-col overflow-hidden rounded-xl border border-gold/15 bg-[#0e0e0c] shadow-2xl shadow-black/60"
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -115,7 +115,7 @@ export function CompareModal({ left, right, onClose }: CompareModalProps) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* ── Sticky Header ── */}
-            <div className="shrink-0 border-b border-slate-700/60 bg-[#111110] px-6 py-3">
+            <div className="shrink-0 border-b border-gold/15/60 bg-[#111110] px-6 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Swords className="h-4.5 w-4.5 text-gold" />
@@ -143,9 +143,9 @@ export function CompareModal({ left, right, onClose }: CompareModalProps) {
             {/* ── Split-Screen Body (strict 50/50 grid) ── */}
             <div className="grid min-h-0 flex-1 grid-cols-2 overflow-hidden">
               {/* Left column */}
-              <div className="flex min-w-0 flex-col overflow-hidden border-r border-slate-700/40">
+              <div className="flex min-w-0 flex-col overflow-hidden border-r border-gold/15/40">
                 {/* Column header */}
-                <div className="shrink-0 border-b border-slate-700/30 bg-[#0c0c0a] px-4 py-2.5">
+                <div className="shrink-0 border-b border-gold/15/30 bg-[#0c0c0a] px-4 py-2.5">
                   <ColumnHeader attempt={left} />
                 </div>
                 {/* Viewer */}
@@ -163,7 +163,7 @@ export function CompareModal({ left, right, onClose }: CompareModalProps) {
               {/* Right column */}
               <div className="flex min-w-0 flex-col overflow-hidden">
                 {/* Column header */}
-                <div className="shrink-0 border-b border-slate-700/30 bg-[#0c0c0a] px-4 py-2.5">
+                <div className="shrink-0 border-b border-gold/15/30 bg-[#0c0c0a] px-4 py-2.5">
                   <ColumnHeader attempt={right} />
                 </div>
                 {/* Viewer */}

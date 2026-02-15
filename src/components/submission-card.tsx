@@ -56,8 +56,8 @@ export function SubmissionCard({
                 isCompareChecked
                   ? "border-gold bg-gold/20 text-gold shadow-[0_0_6px_rgba(200,168,78,0.25)]"
                   : compareDisabled
-                    ? "border-slate-600/40 bg-transparent cursor-not-allowed opacity-30"
-                    : "border-slate-600 bg-transparent hover:border-gold/50"
+                    ? "border-gold/15 bg-transparent cursor-not-allowed opacity-30"
+                    : "border-gold/30 bg-transparent hover:border-gold/50"
               }`}
               aria-label={`Select ${attempt.party?.name ?? "party"} for comparison`}
             >

@@ -352,11 +352,11 @@ function MiniIDE({ files, fillHeight }: { files: ParsedFile[]; fillHeight?: bool
   const active = files[activeIndex];
 
   return (
-    <div className={`mt-3 flex overflow-hidden rounded-sm border border-slate-700 bg-[#0a0a09] ${fillHeight ? "flex-1 min-h-0" : "h-[500px]"}`}>
+    <div className={`mt-3 flex overflow-hidden rounded-sm border border-gold/15 bg-[#0a0a09] ${fillHeight ? "flex-1 min-h-0" : "h-[500px]"}`}>
       {/* ── File Tree Sidebar ── */}
-      <div className="flex w-48 shrink-0 flex-col border-r border-slate-700/60 bg-[#08080a]">
+      <div className="flex w-48 shrink-0 flex-col border-r border-gold/15/60 bg-[#08080a]">
         {/* Sidebar header */}
-        <div className="flex items-center gap-1.5 border-b border-slate-700/40 px-3 py-2">
+        <div className="flex items-center gap-1.5 border-b border-gold/15/40 px-3 py-2">
           <FolderOpen className="h-3.5 w-3.5 text-gold-dim" />
           <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             Files
@@ -394,7 +394,7 @@ function MiniIDE({ files, fillHeight }: { files: ParsedFile[]; fillHeight?: bool
       {/* ── Code Viewer (Right Pane) ── */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Editor tab bar */}
-        <div className="flex items-center justify-between border-b border-slate-700/60 bg-[#0d0d0b] px-4 py-1.5">
+        <div className="flex items-center justify-between border-b border-gold/15/60 bg-[#0d0d0b] px-4 py-1.5">
           <div className="flex items-center gap-2">
             <FileIcon
               filename={active.filename}
@@ -484,7 +484,7 @@ export function SubmissionViewer({ content, fillHeight }: SubmissionViewerProps)
   if (!containsCode) {
     return (
       <div className={`overflow-y-auto scrollbar-dark ${fillHeight ? "flex-1 min-h-0" : ""}`}>
-        <div className="prose prose-invert prose-sm max-w-none prose-headings:font-heading prose-headings:text-gold prose-strong:text-foreground prose-a:text-gold prose-code:text-gold-bright prose-code:bg-secondary prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-[#0d0d0d] prose-pre:border prose-pre:border-border/40">
+        <div className="prose prose-invert prose-sm max-w-none prose-headings:font-heading prose-headings:text-gold prose-strong:text-foreground prose-a:text-gold prose-code:text-gold-bright prose-code:bg-secondary prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-[#0d0d0d] prose-pre:border prose-pre:border-gold/15">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
         </div>
       </div>
@@ -508,7 +508,7 @@ export function SubmissionViewer({ content, fillHeight }: SubmissionViewerProps)
       )}
 
       <Tabs defaultValue="readme" className={fillHeight ? "flex flex-col flex-1 min-h-0" : ""}>
-        <TabsList className="bg-secondary/60 border border-border/40 shrink-0">
+        <TabsList className="bg-secondary/60 border border-gold/15 shrink-0">
           <TabsTrigger value="readme" className="gap-1.5 text-xs">
             <FileText className="h-3 w-3" /> ReadMe
           </TabsTrigger>
@@ -524,8 +524,8 @@ export function SubmissionViewer({ content, fillHeight }: SubmissionViewerProps)
 
         {/* ── ReadMe Tab ── */}
         <TabsContent value="readme" className={fillHeight ? "flex flex-col flex-1 min-h-0" : ""}>
-          <div className={`mt-3 overflow-y-auto rounded-sm border border-slate-700 bg-[#0d0d0d] p-4 scrollbar-dark ${containerH}`}>
-            <div className="prose prose-invert prose-sm max-w-none prose-headings:font-heading prose-headings:text-gold prose-strong:text-foreground prose-a:text-gold prose-code:text-gold-bright prose-code:bg-secondary prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-secondary/50 prose-pre:border prose-pre:border-border/40">
+          <div className={`mt-3 overflow-y-auto rounded-sm border border-gold/15 bg-[#0d0d0d] p-4 scrollbar-dark ${containerH}`}>
+            <div className="prose prose-invert prose-sm max-w-none prose-headings:font-heading prose-headings:text-gold prose-strong:text-foreground prose-a:text-gold prose-code:text-gold-bright prose-code:bg-secondary prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-secondary/50 prose-pre:border prose-pre:border-gold/15">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{readmeContent}</ReactMarkdown>
             </div>
           </div>
@@ -541,9 +541,9 @@ export function SubmissionViewer({ content, fillHeight }: SubmissionViewerProps)
           <TabsContent value="preview" className={fillHeight ? "flex flex-col flex-1 min-h-0" : ""}>
             <div
               ref={previewContainerRef}
-              className={`mt-3 flex flex-col overflow-hidden rounded-sm border border-slate-700 bg-[#0d0d0d] ${fillHeight ? "flex-1 min-h-0" : ""}`}
+              className={`mt-3 flex flex-col overflow-hidden rounded-sm border border-gold/15 bg-[#0d0d0d] ${fillHeight ? "flex-1 min-h-0" : ""}`}
             >
-              <div className="flex items-center border-b border-slate-700 bg-secondary/40 px-4 py-2 shrink-0">
+              <div className="flex items-center border-b border-gold/15 bg-secondary/40 px-4 py-2 shrink-0">
                 <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                   Live Preview
                 </span>

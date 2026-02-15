@@ -78,7 +78,7 @@ export function SubmissionModal({ attempt, onClose }: SubmissionModalProps) {
 
           {/* Modal container */}
           <motion.div
-            className="relative flex h-[90vh] w-11/12 max-w-7xl flex-col overflow-hidden rounded-xl border border-slate-700 bg-[#0e0e0c] shadow-2xl shadow-black/60"
+            className="relative flex h-[90vh] w-11/12 max-w-7xl flex-col overflow-hidden rounded-xl border border-gold/15 bg-[#0e0e0c] shadow-2xl shadow-black/60"
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -86,7 +86,7 @@ export function SubmissionModal({ attempt, onClose }: SubmissionModalProps) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* ── Sticky Header ── */}
-            <div className="shrink-0 border-b border-slate-700/60 bg-[#111110] px-6 py-4">
+            <div className="shrink-0 border-b border-gold/15/60 bg-[#111110] px-6 py-4">
               <div className="flex items-center justify-between">
                 {/* Left: agent info */}
                 <div className="flex items-center gap-3">

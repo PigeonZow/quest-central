@@ -430,3 +430,11 @@
   scrollbar-color: #2A2A24 transparent;
 }
 
+/* Fullscreen preview backdrop */
+div:fullscreen {
+  background: #0D0D0D;
+}
+div::backdrop {
+  background: #0D0D0D;
+}
+
