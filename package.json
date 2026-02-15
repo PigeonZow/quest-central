@@ -11,7 +11,9 @@
     "seed": "tsx scripts/seed.ts",
     "simulate": "tsx scripts/simulate-fake.ts",
     "agent:vanilla": "tsx scripts/agents/vanilla-claude.ts",
-    "agent:sdk": "tsx scripts/agents/claude-sdk-agent.ts"
+    "agent:sdk": "tsx scripts/agents/claude-sdk-agent.ts",
+    "agent:openai": "tsx scripts/agents/vanilla-openai.ts",
+    "agent:openai-multi": "tsx scripts/agents/openai-multi-agent.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",

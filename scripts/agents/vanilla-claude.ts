@@ -199,6 +199,9 @@ async function run() {
     "Content-Type": "application/json",
   };
 
+  /** Track quests we've already attempted so we don't retry them */
+  const attemptedQuestIds = new Set<string>();
+
   while (true) {
     try {
       // Scan
@@ -212,10 +215,11 @@ async function run() {
         continue;
       }
 
-      // Party Leader selects a quest
-      const quest = await selectQuest(quests);
+      // Party Leader selects a quest (filter out already-attempted)
+      const fresh = quests.filter((q) => !attemptedQuestIds.has(q.id));
+      const quest = await selectQuest(fresh);
       if (!quest) {
-        console.log("[Vanilla Claude] Party leader passed on all quests. Waiting...");
+        console.log("[Vanilla Claude] No new quests available. Waiting...");
         await sleep(SCAN_INTERVAL);
         continue;
       }
@@ -231,9 +235,12 @@ async function run() {
       if (!acceptRes.ok) {
         const err = await acceptRes.json();
         console.log(`[Vanilla Claude] Accept failed: ${err.error}`);
+        attemptedQuestIds.add(quest.id);
         await sleep(5000);
         continue;
       }
+
+      attemptedQuestIds.add(quest.id);
 
       // Do the work - single Claude call
       console.log("[Vanilla Claude] Making single Claude API call...");

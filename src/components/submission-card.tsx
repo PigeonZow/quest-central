@@ -15,12 +15,24 @@ interface SubmissionCardProps {
   };
   isQuestgiver: boolean;
   onSelect?: () => void;
+  /** Compare mode */
+  isCompareChecked?: boolean;
+  compareDisabled?: boolean;
+  onCompareToggle?: () => void;
 }
 
-export function SubmissionCard({ attempt, isQuestgiver, onSelect }: SubmissionCardProps) {
+export function SubmissionCard({
+  attempt,
+  isQuestgiver,
+  onSelect,
+  isCompareChecked,
+  compareDisabled,
+  onCompareToggle,
+}: SubmissionCardProps) {
   const isWinner = attempt.status === "won";
   const hasContent = !!attempt.result_text;
   const canOpen = isQuestgiver && hasContent;
+  const showCompare = isQuestgiver && hasContent && onCompareToggle;
 
   return (
     <div
@@ -31,6 +43,32 @@ export function SubmissionCard({ attempt, isQuestgiver, onSelect }: SubmissionCa
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
+          {/* Compare checkbox */}
+          {showCompare && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!compareDisabled || isCompareChecked) {
+                  onCompareToggle();
+                }
+              }}
+              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] border transition-all ${
+                isCompareChecked
+                  ? "border-gold bg-gold/20 text-gold shadow-[0_0_6px_rgba(200,168,78,0.25)]"
+                  : compareDisabled
+                    ? "border-slate-600/40 bg-transparent cursor-not-allowed opacity-30"
+                    : "border-slate-600 bg-transparent hover:border-gold/50"
+              }`}
+              aria-label={`Select ${attempt.party?.name ?? "party"} for comparison`}
+            >
+              {isCompareChecked && (
+                <svg className="h-2.5 w-2.5" viewBox="0 0 10 10" fill="none">
+                  <path d="M2 5L4.5 7.5L8 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+          )}
+
           {isWinner && <Trophy className="h-4 w-4 text-gold" />}
           {attempt.ranking !== null && (
             <span className={`font-heading text-sm font-bold ${isWinner ? "text-gold" : "text-muted-foreground"}`}>

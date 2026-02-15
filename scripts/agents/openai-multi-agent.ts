@@ -2,18 +2,18 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 /**
- * Claude Agent SDK Party
- * Multi-step agent: Plans approach → Executes with tool context → Self-reviews.
- * This is the Anthropic prize showcase.
+ * OpenAI Multi-Step Agent
+ * Three-phase pipeline: Plan → Execute → Review, all powered by GPT-4o.
+ * Mirrors the Claude Agent SDK agent but uses the OpenAI API.
  *
  * Usage:
- *   BASE_URL=http://localhost:3000 API_KEY=your-party-api-key ANTHROPIC_API_KEY=sk-... npx tsx scripts/agents/claude-sdk-agent.ts
+ *   BASE_URL=http://localhost:3000 API_KEY=your-party-api-key OPENAI_API_KEY=sk-... npx tsx scripts/agents/openai-multi-agent.ts
  */
 
 import { createClient } from "@supabase/supabase-js";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 let API_KEY = process.env.API_KEY || "";
 
 const SCAN_INTERVAL = 15000; // 15s between scans (slower, more deliberate)
@@ -30,45 +30,47 @@ async function getApiKeyFromDb(): Promise<string> {
   const { data } = await supabase
     .from("parties")
     .select("api_key")
-    .eq("name", "Claude Agent SDK Party")
+    .eq("name", "GPT-4o Pipeline")
     .single();
   return data?.api_key ?? "";
 }
 
-async function callClaude(
+async function callOpenAI(
   system: string,
   userMessage: string,
   maxTokens = 2048
 ): Promise<{ text: string; tokens: number }> {
-  if (!ANTHROPIC_API_KEY) {
+  if (!OPENAI_API_KEY) {
     return { text: userMessage.slice(0, 200) + "...", tokens: 0 };
   }
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-5-20250929",
+      model: "gpt-4o",
       max_tokens: maxTokens,
-      system,
-      messages: [{ role: "user", content: userMessage }],
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: userMessage },
+      ],
     }),
   });
 
   if (!res.ok) {
     const err = await res.text();
-    console.error("  Claude API error:", err);
+    console.error("  OpenAI API error:", err);
     return { text: `Error: ${res.status}`, tokens: 0 };
   }
 
   const data = await res.json();
   return {
-    text: data.content?.[0]?.text ?? "",
-    tokens: (data.usage?.input_tokens ?? 0) + (data.usage?.output_tokens ?? 0),
+    text: data.choices?.[0]?.message?.content ?? "",
+    tokens:
+      (data.usage?.prompt_tokens ?? 0) + (data.usage?.completion_tokens ?? 0),
   };
 }
 
@@ -88,7 +90,7 @@ Description: ${questDescription}${criteria ? `\nAcceptance Criteria: ${criteria}
 
 Output a numbered plan with 3-5 steps. Be specific about what each step should accomplish.`;
 
-  const plan = await callClaude(
+  const plan = await callOpenAI(
     "You are a meticulous planning agent. Break tasks into clear, actionable steps.",
     planPrompt,
     2048
@@ -108,7 +110,7 @@ ${plan.text}
 
 Now execute the plan step by step. Provide your complete, thorough output.`;
 
-  const execution = await callClaude(
+  const execution = await callOpenAI(
     `You are an expert execution agent. Follow the given plan precisely and produce high-quality output. Be thorough and detailed.
 
 CRITICAL: If your response includes ANY code (HTML, CSS, JS, Python, etc.), you MUST wrap the code entirely in standard markdown code blocks with the language specified (e.g., \`\`\`html
@@ -136,7 +138,7 @@ Instructions:
 - Your output IS the final submission. Do NOT include any meta-commentary, review notes, or self-assessment.
 - Do NOT wrap the output in extra headings like "Final Version" or "Improved Version" — just output the work itself.`;
 
-  const review = await callClaude(
+  const review = await callOpenAI(
     `You are a critical review agent. Evaluate output quality and improve if needed. If the output is already good, approve it. Always return the final output.
 
 CRITICAL: If the output includes ANY code (HTML, CSS, JS, Python, etc.), you MUST preserve it in standard markdown code blocks with the language specified (e.g., \`\`\`html
@@ -148,20 +150,23 @@ code here
   totalTokens += review.tokens;
   console.log(`  Review complete (${review.tokens} tokens)`);
 
-  // Submit only the polished final output — not the plan or review scaffolding
   return { result: review.text, totalTokens };
 }
 
 async function run() {
-  console.log("Claude Agent SDK Party (Multi-Step Agent)");
+  console.log("GPT-4o Pipeline Agent (Multi-Step)");
   console.log(`Base URL: ${BASE_URL}`);
-  console.log(`Anthropic API: ${ANTHROPIC_API_KEY ? "configured" : "NOT SET (using fallback)"}\n`);
+  console.log(
+    `OpenAI API: ${OPENAI_API_KEY ? "configured" : "NOT SET (using fallback)"}\n`
+  );
 
   if (!API_KEY) {
     console.log("No API_KEY env var, looking up from database...");
     API_KEY = await getApiKeyFromDb();
     if (!API_KEY) {
-      console.error("Could not find Claude Agent SDK Party. Run seed first: npm run seed");
+      console.error(
+        'Could not find "GPT-4o Pipeline" party. Run seed first: npm run seed'
+      );
       process.exit(1);
     }
     console.log(`Found API key: ${API_KEY.slice(0, 8)}...\n`);
@@ -177,18 +182,19 @@ async function run() {
 
   while (true) {
     try {
-      // Scan
-      console.log("[Claude SDK Agent] Scanning for quests...");
-      const questsRes = await fetch(`${BASE_URL}/api/external/quests`, { headers });
+      console.log("[GPT-4o Pipeline] Scanning for quests...");
+      const questsRes = await fetch(`${BASE_URL}/api/external/quests`, {
+        headers,
+      });
       const quests = await questsRes.json();
 
       if (!Array.isArray(quests) || quests.length === 0) {
-        console.log("[Claude SDK Agent] No open quests. Waiting...");
+        console.log("[GPT-4o Pipeline] No open quests. Waiting...");
         await sleep(SCAN_INTERVAL);
         continue;
       }
 
-      // Prefer harder quests (A and S rank) - this is where the multi-step approach shines
+      // Prefer harder quests — multi-step pipeline shines on A and S rank
       const sorted = [...quests]
         .filter((q) => !attemptedQuestIds.has(q.id))
         .sort((a, b) => {
@@ -197,14 +203,16 @@ async function run() {
         });
 
       if (sorted.length === 0) {
-        console.log("[Claude SDK Agent] No new quests available. Waiting...");
+        console.log("[GPT-4o Pipeline] No new quests available. Waiting...");
         await sleep(SCAN_INTERVAL);
         continue;
       }
 
       const quest = sorted[0];
 
-      console.log(`[Claude SDK Agent] Accepting: "${quest.title}" (${quest.difficulty}-Rank)`);
+      console.log(
+        `[GPT-4o Pipeline] Accepting: "${quest.title}" (${quest.difficulty}-Rank)`
+      );
 
       // Accept
       const acceptRes = await fetch(
@@ -214,7 +222,7 @@ async function run() {
 
       if (!acceptRes.ok) {
         const err = await acceptRes.json();
-        console.log(`[Claude SDK Agent] Accept failed: ${err.error}`);
+        console.log(`[GPT-4o Pipeline] Accept failed: ${err.error}`);
         attemptedQuestIds.add(quest.id);
         await sleep(5000);
         continue;
@@ -223,7 +231,7 @@ async function run() {
       attemptedQuestIds.add(quest.id);
 
       // Multi-step execution
-      console.log("[Claude SDK Agent] Starting multi-step execution...");
+      console.log("[GPT-4o Pipeline] Starting multi-step execution...");
       const { result, totalTokens } = await multiStepAgent(
         quest.title,
         quest.description,
@@ -244,13 +252,15 @@ async function run() {
       );
 
       if (submitRes.ok) {
-        console.log(`[Claude SDK Agent] Submitted for "${quest.title}" (${totalTokens} total tokens)\n`);
+        console.log(
+          `[GPT-4o Pipeline] Submitted for "${quest.title}" (${totalTokens} total tokens)\n`
+        );
       } else {
         const err = await submitRes.json();
-        console.log(`[Claude SDK Agent] Submit failed: ${err.error}\n`);
+        console.log(`[GPT-4o Pipeline] Submit failed: ${err.error}\n`);
       }
     } catch (err) {
-      console.error("[Claude SDK Agent] Error:", err);
+      console.error("[GPT-4o Pipeline] Error:", err);
     }
 
     await sleep(SCAN_INTERVAL);
