@@ -18,8 +18,8 @@ import { DEMO_USER_ID, DEMO_USER_2_ID } from "@/lib/constants";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/quests", label: "Quests", icon: Scroll },
-  { href: "/parties", label: "Parties", icon: Swords },
+  { href: "/quests", label: "Quests", icon: Scroll, countKey: "quests" as const },
+  { href: "/parties", label: "Parties", icon: Swords, countKey: "parties" as const },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/docs", label: "API Docs", icon: BookOpen },
@@ -43,6 +43,8 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [gold, setGold] = useState<number | null>(null);
+  const [questCount, setQuestCount] = useState<number | null>(null);
+  const [partyCount, setPartyCount] = useState<number | null>(null);
   const [userId, setUserId] = useState(DEMO_USER_ID);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -58,27 +60,54 @@ export function Navbar() {
     [router]
   );
 
+  // Read cookie after hydration to avoid SSR mismatch
   useEffect(() => {
     const cookieUserId = getCookie("qc_user_id");
-    if (cookieUserId && USERS.some((u) => u.id === cookieUserId)) {
+    if (cookieUserId && cookieUserId !== userId && USERS.some((u) => u.id === cookieUserId)) {
       setUserId(cookieUserId);
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const supabase = createClient();
 
+    // Fetch gold
+    function fetchGold() {
+      supabase
+        .from("profiles")
+        .select("gold")
+        .eq("id", userId)
+        .single()
+        .then(({ data }) => {
+          if (data) setGold(data.gold ?? 0);
+        });
+    }
+    fetchGold();
+
+    // Fetch quest count (all active quests)
     supabase
-      .from("profiles")
-      .select("gold")
-      .eq("id", userId)
-      .single()
-      .then(({ data }) => {
-        if (data) setGold(data.gold ?? 0);
+      .from("quests")
+      .select("*", { count: "exact", head: true })
+      .in("status", ["open", "in_progress", "review"])
+      .then(({ count }) => {
+        setQuestCount(count ?? 0);
       });
 
+    // Fetch party count (per-user)
+    supabase
+      .from("parties")
+      .select("*", { count: "exact", head: true })
+      .eq("owner_id", userId)
+      .then(({ count }) => {
+        setPartyCount(count ?? 0);
+      });
+
+    // Listen for gold-changed events from other pages (e.g. quest creation)
+    const onGoldChanged = () => fetchGold();
+    window.addEventListener("gold-changed", onGoldChanged);
+
     const channel = supabase
-      .channel("navbar-gold")
+      .channel("navbar-stats")
       .on(
         "postgres_changes",
         {
@@ -92,12 +121,40 @@ export function Navbar() {
           if (updated.gold !== undefined) setGold(updated.gold);
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "quests" },
+        () => {
+          supabase
+            .from("quests")
+            .select("*", { count: "exact", head: true })
+            .in("status", ["open", "in_progress", "review"])
+            .then(({ count }) => setQuestCount(count ?? 0));
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "parties" },
+        () => {
+          supabase
+            .from("parties")
+            .select("*", { count: "exact", head: true })
+            .eq("owner_id", userId)
+            .then(({ count }) => setPartyCount(count ?? 0));
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener("gold-changed", onGoldChanged);
     };
   }, [userId]);
+
+  const counts: Record<string, number | null> = {
+    quests: questCount,
+    parties: partyCount,
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-14 border-b border-border/60 bg-[#0A0A0A]/95 backdrop-blur-sm">
@@ -114,6 +171,7 @@ export function Navbar() {
         <div className="nav-glow flex items-center gap-0.5">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname.startsWith(item.href);
+            const count = item.countKey ? counts[item.countKey] : null;
             return (
               <Link
                 key={item.href}
@@ -126,6 +184,11 @@ export function Navbar() {
               >
                 <item.icon className="h-3.5 w-3.5 relative" />
                 <span className="relative">{item.label}</span>
+                {count !== null && (
+                  <span className="text-[10px] font-normal text-muted-foreground/60">
+                    ({count})
+                  </span>
+                )}
               </Link>
             );
           })}
