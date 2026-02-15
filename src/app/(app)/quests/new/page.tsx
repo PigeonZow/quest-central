@@ -44,6 +44,8 @@ export default function NewQuestPage() {
 
     if (res.ok) {
       const quest = await res.json();
+      // Notify navbar to refresh gold immediately
+      window.dispatchEvent(new Event("gold-changed"));
       router.push(`/quests/${quest.id}`);
     } else {
       setLoading(false);

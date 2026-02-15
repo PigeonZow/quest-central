@@ -1,65 +1,15 @@
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserId } from "@/lib/current-user";
 import { ActivityFeed } from "@/components/activity-feed";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
-import { Coins, Scroll, Swords } from "lucide-react";
 
 export default async function DashboardPage() {
   const userId = await getCurrentUserId();
-  const supabase = await createClient();
-
-  const [
-    { count: questCount },
-    { count: partyCount },
-    { data: profile },
-  ] = await Promise.all([
-    supabase
-      .from("quests")
-      .select("*", { count: "exact", head: true })
-      .eq("questgiver_id", userId),
-    supabase
-      .from("parties")
-      .select("*", { count: "exact", head: true })
-      .eq("owner_id", userId),
-    supabase.from("profiles").select("*").eq("id", userId).single(),
-  ]);
-
-  const stats = [
-    {
-      label: "Quests Posted",
-      value: questCount ?? 0,
-      icon: Scroll,
-    },
-    {
-      label: "Your Parties",
-      value: partyCount ?? 0,
-      icon: Swords,
-    },
-    {
-      label: "Total Gold",
-      value: profile?.gold ?? 0,
-      icon: Coins,
-    },
-  ];
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-8">
       <RealtimeRefresh tables={["quests", "quest_attempts", "activity_log", "parties"]} />
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-xl font-semibold tracking-wide">Dashboard</h1>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="card-rpg rounded-sm p-5 flex items-center gap-4">
-            <stat.icon className="h-6 w-6 text-gold-dim" />
-            <div>
-              <p className="font-heading text-lg font-bold text-foreground">{stat.value}</p>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{stat.label}</p>
-            </div>
-          </div>
-        ))}
       </div>
 
       {/* Activity Feed */}
