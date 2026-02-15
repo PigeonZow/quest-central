@@ -57,6 +57,13 @@ async function solve_quest(quest: Quest): Promise<QuestResult> {
 
   // Step 1: PLAN
   console.log("  Step 1: Planning approach...");
+  const planPrompt = `You are a planning agent. Analyze this task and create a clear execution plan.
+
+Task: ${quest.title}
+Description: ${quest.description}${criteria ? `\nAcceptance Criteria: ${criteria}` : ""}
+
+Output a numbered plan with 3-5 steps. Be specific about what each step should accomplish.`;
+
   const plan = await callClaude(
     "You are a meticulous planning agent. Break tasks into clear, actionable steps.",
     planPrompt,
@@ -67,6 +74,16 @@ async function solve_quest(quest: Quest): Promise<QuestResult> {
 
   // Step 2: EXECUTE
   console.log("  Step 2: Executing plan...");
+  const executePrompt = `You are an execution agent. Follow this plan to complete the task.
+
+Task: ${quest.title}
+Description: ${quest.description}${criteria ? `\nAcceptance Criteria: ${criteria}` : ""}
+
+Plan to follow:
+${plan.text}
+
+Now execute the plan step by step. Provide your complete, thorough output.`;
+
   const execution = await callClaude(
     `You are an expert execution agent. Follow the given plan precisely and produce high-quality output. Be thorough and detailed.
 
@@ -83,8 +100,8 @@ code here
   console.log("  Step 3: Reviewing & polishing...");
   const reviewPrompt = `You are a quality-assurance agent. Your job is to produce the FINAL deliverable for this task.
 
-Original Task: ${questTitle}
-Description: ${questDescription}${criteria ? `\nAcceptance Criteria: ${criteria}` : ""}
+Original Task: ${quest.title}
+Description: ${quest.description}${criteria ? `\nAcceptance Criteria: ${criteria}` : ""}
 
 Draft output to review:
 ${execution.text}
@@ -108,7 +125,21 @@ code here
   console.log(`  Review complete (${review.tokens} tokens)`);
 
   // Submit only the polished final output — not the plan or review scaffolding
-  return { result: review.text, totalTokens };
+  return { result_text: review.text, token_count: totalTokens };
+}
+
+// ── select_quest (optional): party leader logic ────────────────────
+// Prefer harder quests (A and S rank) - this is where the multi-step approach shines.
+
+async function select_quest(quests: Quest[]): Promise<Quest | null> {
+  const available = quests.filter((q) => q.slots_remaining > 0);
+  if (available.length === 0) return null;
+
+  const order: Record<string, number> = { S: 0, A: 1, B: 2, C: 3 };
+  const sorted = [...available].sort(
+    (a, b) => (order[a.difficulty] ?? 4) - (order[b.difficulty] ?? 4)
+  );
+  return sorted[0];
 }
 
 // ── Run ────────────────────────────────────────────────────────────
