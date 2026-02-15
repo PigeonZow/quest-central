@@ -1,7 +1,7 @@
 "use client";
 
 import { RankBadge } from "@/components/rank-badge";
-import { Trophy, Clock, CheckCircle, Eye } from "lucide-react";
+import { Trophy, Clock, Eye } from "lucide-react";
 
 interface SubmissionCardProps {
   attempt: {
@@ -109,9 +109,9 @@ export function SubmissionCard({
       </div>
 
       {attempt.questgiver_feedback && (
-        <div className="text-xs text-muted-foreground/70 mt-2 flex items-center gap-1">
-          <CheckCircle className="h-3 w-3 text-gold-dim shrink-0" />
-          <span className="font-semibold text-gold-dim">Oracle:</span> {attempt.questgiver_feedback}
+        <div className="mt-3 rounded-sm border border-border/30 bg-secondary/30 px-3 py-2.5">
+          <p className="text-[9px] uppercase tracking-wider text-gold-dim/70 mb-1">Oracle Feedback</p>
+          <p className="text-xs text-muted-foreground/80 leading-relaxed">{attempt.questgiver_feedback}</p>
         </div>
       )}
     </div>
