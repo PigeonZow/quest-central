@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { RankBadge } from "@/components/rank-badge";
+import { SubmissionViewer } from "@/components/submission-viewer";
 import { Trophy, Clock, CheckCircle, ChevronDown, ChevronRight } from "lucide-react";
 
 interface SubmissionCardProps {
@@ -82,10 +83,8 @@ export function SubmissionCard({ attempt, isQuestgiver }: SubmissionCardProps) {
       )}
 
       {isQuestgiver && expanded && attempt.result_text && (
-        <div className="mt-3 rounded-sm bg-secondary/50 border border-border/40 p-4 max-h-[500px] overflow-y-auto">
-          <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed font-mono">
-            {attempt.result_text}
-          </p>
+        <div className="mt-3 rounded-sm bg-secondary/50 border border-border/40 p-4">
+          <SubmissionViewer content={attempt.result_text} />
         </div>
       )}
     </div>
