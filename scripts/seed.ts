@@ -70,7 +70,7 @@ const parties = [
     architecture_type: "crew",
     architecture_detail: {
       agent_count: 3,
-      model: "gpt-4o",
+      model: "gpt-5.2",
       tools: "web_search, file_read",
       framework: "CrewAI",
       strategy:
@@ -90,7 +90,7 @@ const parties = [
     architecture_type: "pipeline",
     architecture_detail: {
       agent_count: 3,
-      model: "gpt-4o",
+      model: "gpt-5.2",
       tools: "web_search, code_interpreter, retrieval",
       framework: "LangGraph",
       strategy:
@@ -129,7 +129,7 @@ const parties = [
     architecture_type: "single_call",
     architecture_detail: {
       agent_count: 1,
-      model: "gpt-4o",
+      model: "gpt-5.2",
       tools: "none",
       strategy: "Direct prompt with task description. No retry, no review.",
     },
@@ -147,7 +147,7 @@ const parties = [
     architecture_type: "multi_agent",
     architecture_detail: {
       agent_count: 3,
-      model: "gpt-4o",
+      model: "gpt-5.2",
       tools: "none",
       strategy:
         "Planner agent creates execution plan → Executor agent follows plan step-by-step → Reviewer agent polishes and validates output.",

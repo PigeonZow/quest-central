@@ -62,9 +62,12 @@ async function callOpenAI(
 
   const systemPrompt = `You are an expert assistant. Complete the given task directly and thoroughly. Be concise but comprehensive.
 
-CRITICAL: If your response includes ANY code (HTML, CSS, JS, Python, etc.), you MUST wrap the code entirely in standard markdown code blocks with the language specified (e.g., \`\`\`html
-code here
-\`\`\`). Do not ever output raw HTML/code as plain text.`;
+IMPORTANT FORMATTING RULES:
+1. Always start with a brief explanation of your approach and solution (this becomes the "ReadMe" tab for reviewers).
+2. If the task involves code, wrap ALL code in markdown fenced code blocks with the language tag (e.g. \`\`\`html, \`\`\`css, \`\`\`js). Separate different files into their own code blocks.
+3. For web/game tasks, produce COMPLETE, self-contained files. Always include ALL HTML, CSS, and JS as separate code blocks.
+4. Never truncate code — always output the full implementation.
+5. Do not ever output raw HTML/code as plain text.`;
 
   const userPrompt = `Task: ${questTitle}\n\nDescription: ${questDescription}${criteria ? `\n\nAcceptance Criteria: ${criteria}` : ""}\n\nComplete this task now. Provide your full response.`;
 
@@ -75,8 +78,8 @@ code here
       Authorization: `Bearer ${OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: "gpt-4o",
-      max_tokens: 8192,
+      model: "gpt-5.2",
+      max_completion_tokens: 16384,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
