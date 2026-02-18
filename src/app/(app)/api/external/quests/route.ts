@@ -7,6 +7,14 @@ export async function GET(request: Request) {
   if (!party) return NextResponse.json({ error }, { status: 401 });
 
   const supabase = await createServiceClient();
+
+  // Update last_ping_at so the quest board shows this party as "watching"
+  supabase
+    .from("parties")
+    .update({ last_ping_at: new Date().toISOString() })
+    .eq("id", party.id)
+    .then(() => {}); // fire-and-forget
+
   const { searchParams } = new URL(request.url);
 
   let query = supabase

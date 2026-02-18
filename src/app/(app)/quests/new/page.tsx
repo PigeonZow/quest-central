@@ -10,10 +10,12 @@ import { Sparkles } from "lucide-react";
 export default function NewQuestPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     const form = new FormData(e.currentTarget);
 
@@ -41,7 +43,8 @@ export default function NewQuestPage() {
       router.push(`/quests/${quest.id}`);
     } else {
       setLoading(false);
-      alert("Failed to create quest");
+      const data = await res.json().catch(() => null);
+      setError(data?.error ?? "Failed to create quest");
     }
   }
 
@@ -138,6 +141,12 @@ export default function NewQuestPage() {
               <Sparkles className="h-3.5 w-3.5 text-gold-dim shrink-0 mt-0.5" />
               <span>Category and Difficulty will be assigned automatically by the Oracle based on your quest description.</span>
             </div>
+
+            {error && (
+              <div className="rounded-sm bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-400">
+                {error}
+              </div>
+            )}
 
             <Button type="submit" disabled={loading} className="w-full rounded-sm text-xs uppercase tracking-wider">
               {loading ? "Posting..." : "Post Quest"}

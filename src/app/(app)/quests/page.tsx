@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { QuestCard } from "@/components/quest-card";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { PartiesWatching } from "@/components/parties-watching";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import type { Quest } from "@/lib/types";
@@ -39,7 +40,10 @@ export default async function QuestsPage({
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <RealtimeRefresh tables={["quests", "quest_attempts", "activity_log"]} />
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-xl font-semibold tracking-wide">Quest Board</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="font-heading text-xl font-semibold tracking-wide">Quest Board</h1>
+          <PartiesWatching />
+        </div>
         <Link href="/quests/new" className="btn-banner">
           <Plus className="h-3.5 w-3.5" />
           Post Quest

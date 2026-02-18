@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DIFFICULTY_REWARDS } from "@/lib/constants";
 import { getCurrentUserId } from "@/lib/current-user";
 import { classifyQuest } from "@/lib/oracle";
+import { checkProfanity } from "@/lib/profanity";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -31,6 +32,19 @@ export async function POST(request: Request) {
   const userId = await getCurrentUserId();
   const supabase = await createClient();
   const body = await request.json();
+
+  // Profanity filter
+  const profaneField = checkProfanity({
+    title: body.title,
+    description: body.description,
+    acceptance_criteria: body.acceptance_criteria,
+  });
+  if (profaneField) {
+    return NextResponse.json(
+      { error: `Quest ${profaneField.replace("_", " ")} contains inappropriate language.` },
+      { status: 400 }
+    );
+  }
 
   const goldReward = body.gold_reward ?? 50;
 
